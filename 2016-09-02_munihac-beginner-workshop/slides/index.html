@@ -1,0 +1,593 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Haskell beginner workshop</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/solarized.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+
+
+
+
+
+<!-- Titel-Slide -->
+<section>
+    <p>
+        MuniHac 2016</br>
+        2nd of September
+    </p>
+    <h1>Haskell beginner workshop</h1>
+    <p>
+        <a href="mailto:david.luposchainsky@tngtech.com">David Luposchainsky</a><br/>
+        <a href="https://github.com/quchen/">quchen</a> /ˈkuːχn̩/<br/>
+        <a href="http://www.tngtech.com">TNG Technology Consulting</a>
+    </p>
+</section>
+
+<section>
+    <section data-markdown><script type="text/template">
+# Agenda
+
+1. Mile-high overview
+2. Basic language intro
+3. Simple example programs
+    </script></section>
+</section>
+
+<section>
+    <section data-markdown><script type="text/template">
+## Mile-high overview
+
+- General purpose
+- High level
+- Purely functional
+- Lazy
+- Strong static type system
+- Type inference
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+### General purpose
+
+Jafet says: *Haskell is an abstract research language used only in
+academia, education, banking, stock trading, circuit design, embedded
+systems, cryptography, operating systems research, bioinformatics, phone
+apps, and web services.*
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+### High level
+
+- No manual memory management
+- Compiler decides execution order
+- High abstraction capabilities
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+### Purely functional
+
+- No implicit side effects
+- Avoidance of mutable state
+- Functions define control flow
+- Referential transparency
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+### Lazy (evaluation by need)
+
+**Advantage:** unnecessary computations skipped
+
+**Disadvantage:** unnecessarily unevaluated computations stored
+    </script></section>
+</section>
+
+<section>
+    <section data-markdown><script type="text/template">
+# Language introduction
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Hello World
+
+![](img/newline.jpg)
+    </script></section>
+
+    <section>
+        <h2>Hello World</h2>
+
+        <pre><code class="haskell" data-trim>
+main = putStrLn "Hello world"
+        </code></pre>
+
+        <pre class="fragment"><code class="bash" data-trim>
+$ ghc helloworld.hs
+[1 of 1] Compiling Main   ( helloworld.hs, helloworld.o )
+Linking helloworld …
+        </code></pre>
+
+        <pre class="fragment"><code class="bash" data-trim>
+$ ./helloworld
+Hello world
+        </code></pre>
+    </section>
+
+    <section data-markdown><script type="text/template">
+## Simple expressions
+
+```haskell
+λ. 1+2
+
+λ. "hello" ++ " world!"
+
+λ. length 12345
+
+λ. length "12345"
+
+λ. 1 + "2"       -- inline comment
+
+λ. (1 + 2) * 3   {- multiline comment -}
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Simple definitions
+
+```haskell
+one = 1
+
+-- Functions
+once   x = x
+square x = x * x
+cube   x = x * square x
+
+myNot p = if p then False else True
+
+doubleIfSmall x =
+    if myNot (x > 100)
+        then x * 2
+        else x
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+    ```haskell
+    λ. :l test.hs
+
+    λ. doubleIfSmall 3
+    6
+
+    λ. doubleIfSmall 300
+    300
+    ```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Lists
+
+```haskell
+λ. let primes = [2,3,5,7,11,13]
+
+λ. primes
+
+λ. ['h','e','l','l','o']
+
+λ. "hello" ++ "world"
+
+λ. 'h' : "ello"
+
+λ. "h" : "ello"
+
+λ. 1 : "ello"
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Some list functions
+
+```haskell
+λ. [1..10]
+
+λ. [1..10] !! 3
+
+λ. [1..]
+
+λ. [1..] !! 3
+
+λ. drop 3 [1..]
+
+λ. [1..] > [2..]
+
+λ. sum [1..]
+
+λ. elem 42 [1..]
+```
+    </script></section>
+
+    <section>
+        <h2>Pattern matching lists</h2>
+
+        <pre><code class="haskell" data-trim>
+isEmpty []       = True
+isEmpty (x:rest) = False
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+swapTop (x:y:rest) = y:x:rest
+swapTop rest       = rest
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+elem x []     = False
+elem x (y:ys) = x == y || elem x ys
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>Exercise</h2>
+
+        Implement the <em>take</em> function.
+
+        <pre><code class="haskell" data-trim>
+-- take 3 [1..]  ==>  [1,2,3]
+
+take n [] = ...
+take ...
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+take 0 xs = []
+take n [] = []
+take n (x:xs) = x : take (n-1) xs
+        </code></pre>
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Lambdas
+
+```haskell
+isPositive = \x -> x > 0
+
+add3 = \x y z -> x + y + z
+```
+
+```bash
+λ. filter (\x -> mod x 3 == 0) [1..]
+```
+    </script></section>
+
+    <section>
+        <h2>Exercise</h2>
+
+        <blockquote>
+        <strong>ProjectEuler #1:</strong> Find the sum of all the multiples of 3 or 5 below 1000.
+        </blockquote>
+
+        <pre><code class="haskell" data-trim>
+sum [1,2,3] = 6
+filter (\x -> even x) [1,2,3] = [2]
+True || False = True
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+solution = sum (filter (\x -> mod x 3 == 0 || mod x 5 == 0) [1..999])
+        </code></pre>
+    </section>
+</section>
+
+<section>
+    <section data-markdown><script type="text/template">
+        # Types
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+        ## Strong static type system
+
+        - *No* implicit type conversion
+        - Types are helpful
+        - Type inference makes types unobtrusive
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Checking types in GHCi
+
+```haskell
+λ. :t [True, False]
+:: [Bool]
+
+λ. :t not
+:: Bool -> Bool
+
+λ. :t map
+:: (a -> b) -> [a] -> [b]
+
+λ. :t map not -- currying!
+:: [Bool] -> [Bool]
+```
+    </script></section>
+
+    <section>
+        <h2>What do types tell us?</h2>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+x :: (Integer, Integer) -> (Integer, Integer)
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+y :: (a, a) -> (a, a)
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+z :: (a, b) -> (b, a)
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>What do types tell us?</h2>
+
+        <pre><code class="haskell" data-trim>
+x :: (a -> Bool) -> [a] -> Integer
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+y :: [a] -> [b] -> [(a,b)]
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+z :: Integer -> [a] -> [a]
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+w :: (a -> b) -> [a] -> [b]
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>Exercise</h2>
+
+        Implement a function of type
+
+        <pre><code class="haskell" data-trim>
+f :: [a] -> (a  -> Bool) -> [a]
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+whileTake [] p = []
+whileTake (x:xs) p = if p x then x : whileTake xs p
+                            else []
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+whileDrop [] p = []
+whileDrop (x:xs) p = if p x then []
+                            else x : whileDrop xs p
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+whileDrop xs p = []
+        </code></pre>
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Defining new types
+
+```haskell
+-- Syntax
+data TypeName <args> = ConstructorA <args>
+      ^              | ConstructorB <args>
+      |              …    ^
+      |                   |
+-- "type constructor"   "value constructors"
+```
+
+```haskell
+data YesNo = Yes
+           | No
+
+data OptionalInteger = Absent
+                     | Some Integer
+
+data ListOfChar = Nil
+                | Cons Char (List Char)
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Parameterized types
+
+```haskell
+data Optional a = Absent | Some a
+-- Some "hello" :: Optional String
+-- Absent :: Optional a
+
+data List a = Nil | Cons a (List a)
+-- Cons 1 (Cons 2 Nil) :: List Integer
+
+data Tuple a b = Tuple a b
+-- Tuple 1 'x' :: Tuple Integer Char
+
+data EitherOr a b = A a | B b
+-- A "hello" :: EitherOr String b
+-- B 1234567 :: EitherOr a      Integer
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Standard types
+
+```haskell
+data Bool = True | False
+data Maybe a = Nothing | Just a
+data Either a b = Left a | Right b
+
+-- With a little syntax cheating
+data [a] = [] | a : [a]
+data (a,b) = (a,b)
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Pattern matching, again
+
+```haskell
+safeHead []     = Nothing
+safeHead (x:xs) = Just x
+
+unEither (Left  l) = l
+unEither (Right r) = r
+
+swapTuple (x,y) = (y,x)
+
+fst (x,_) = x
+```
+    </script></section>
+
+    <section>
+        <h2>Compiler support</h2>
+
+        Enable warnings with <code>:set -Wall</code> in GHCi
+
+        <pre class="fragment"><code class="haskell" data-trim>
+unLeft (Left l) = l
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+unCrazy (Left ([], Just b, Right _)) = b
+unCrazy (Right r) = r
+        </code></pre>
+    </section>
+
+    <section data-markdown><script type="text/template">
+## Basic type classes
+
+Typeclasses unify common behaviour.
+
+```haskell
+-- Compare for equality: "a" needs to be Eq
+(==) :: Eq a => a -> a -> Bool
+
+-- Compare order: "a" needs to be Ord
+(<) :: Ord a => a -> a -> Bool
+
+-- Convert to String: "a" needs to be Show-able
+show :: Show a => a -> String
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Defining new instances
+
+```haskell
+data List a = Nil | Cons a (List a)
+
+instance Eq a => Eq (List a) where
+    []     == []      = True
+    (x:xs) == (y:ys)  = x == y && xs == ys
+    _xs    == _ys     = False
+```
+
+Basic type class instances can be auto-generated:
+
+```haskell
+data List a = Nil | Cons a (List a)
+    deriving Eq
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Implementing custom type classes
+
+```haskell
+class TrueIsh a where
+    isTrue :: a -> Bool
+    isTrue = not . isFalse
+
+    isFalse :: a -> Bool
+    isFalse = not . isTrue
+```
+
+```haskell
+instance TrueIsh Bool where
+    isTrue x = x
+
+instance TrueIsh (Maybe a) where
+    isTrue Nothing  = False
+    isTrue _        = True
+
+instance TrueIsh [a] where
+    isFalse [] = True
+    isFalse _  = False
+```
+    </script></section>
+
+</section>
+
+<section>
+    <section data-markdown><script type="text/template">
+        # Exercise
+
+        Let’s write a binary tree library together!
+    </script></section>
+</section>
+
+<section>
+    <section data-markdown><script type="text/template">
+        # Example programs
+    </script></section>
+</section>
+
+<!-- <pre><code class="haskell" data-trim>
+main = print (x+y)
+x = 1
+y = 2
+a + b = … - - built-in
+</code></pre> -->
+
+
+
+
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // More info https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                history: true,
+
+                transition: 'slide',
+                transitionSpeed: 'fast',
+                controls: false,
+                progress: false,
+
+                // More info https://github.com/hakimel/reveal.js#dependencies
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ]
+            });
+        </script>
+    </body>
+</html>

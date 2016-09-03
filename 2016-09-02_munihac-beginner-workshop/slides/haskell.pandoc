@@ -1,0 +1,2284 @@
+TODO:
+
+- Rewrite-Regeln erwähnen
+- Design Patterns besprechen
+
+
+
+
+---
+title: "Introduction to Haskell"
+subtitle: "Being lazy with style"
+author: David Luposchainsky
+date: 2015-08-14
+---
+
+![](img/haskell-logo.svg)
+
+
+# Introduction
+
+## Key features
+
+- General purpose
+- High level
+- Purely functional
+- Lazy
+- Strong static type system
+- Type inference
+
+## Haskell is *different*.
+
+- Recursion instead of loops
+- All values are immutable
+- No OOP
+- Different kind of polymorphism
+
+## Haskell requires
+
+- Willingness to learn something from worse than zero
+- Not necessarily a degree in mathematics (source: I have none)
+- Not necessarily knowledge of mathematics (source: I had none)
+
+## Hello World
+
+![](img/newline.jpg)
+
+## Hello World
+
+
+```haskell
+main = putStrLn "hello world"
+```
+
+## Hello World
+
+```bash
+$ ghc helloworld.hs
+[1 of 1] Compiling Main   ( helloworld.hs, helloworld.o )
+Linking helloworld …
+
+$ ./helloworld
+hello world
+```
+
+
+
+
+
+
+# Setup
+
+## Compiler, REPL
+
+- Main compiler: GHC (Glasgow Haskell Compiler)
+- Interactive mode: GHCi
+- Stack to manage dependencies, sandboxes, etc.
+
+```bash
+$ stack ghci
+...
+GHCi, version 7.10.3: http://www.haskell.org/ghc/  :? for help
+λ. "hello world!"
+"hello world!"
+```
+
+## Basic Development cycle
+
+Everyday development:
+
+1. Edit source
+2. Compile
+3. Type error? Back to 1.
+
+That's very often the end of it. Otherwise:
+
+4. Play around in GHCi
+5. Write tests
+6. Run tests
+7. Error? Back to 1.
+
+
+
+
+# Basic syntax
+
+## Using GHCi
+
+```haskell
+λ. 1+2
+3
+
+λ. "hello" ++ " world!"
+"hello world!"
+
+λ. length "12345"
+5
+
+λ. length 12345
+
+λ. 1 + "2"   -- inline comment
+
+λ. (1 + 2) * 3   {- multiline comment -}
+```
+
+## Some more basic functions
+
+```haskell
+λ. True && False
+False
+
+λ. True == False
+False
+
+λ. True /= False
+True
+
+λ. 12 >= 7
+True
+
+λ. max 5 7
+7
+
+λ. succ 4
+5
+
+λ. succ (succ (max 5 7))
+9
+```
+
+## `if` expressions
+
+```haskell
+-- 'if' is always an expresion
+λ. if 2 > 3 then "yes" else "no"
+"no"
+
+-- 'if' requires an 'else'
+λ. if 2 > 3 then "yes" -- Parse error
+
+-- There is no elseIf, but we have something better :-)
+```
+
+## Including source files
+
+- External files are loaded with `:l`
+
+    ```bash
+    $ echo "foo = 3 + 7" > Test.hs
+    $ stack ghci
+    …
+
+    λ. :l test.hs
+    [1 of 1] Compiling Main   ( test.hs, interpreted )
+    Ok, modules loaded: Main.
+
+    λ. foo
+    10
+    ```
+
+- `Test.hs` will be our source file for the time being.
+
+- `:r` reloads all files. Useful when contents change.
+
+## Simple definitions
+
+```haskell
+one = 1
+
+-- Functions
+once   x = x
+square x = x * x
+cube   x = x * x * x  -- or x^3
+
+not' p = if p then False else True  -- ' is like a letter
+
+doubleIfSmall x =
+    if not' (x > 100)
+        then x * 2
+        else x
+
+-- indentation is part of the syntax!
+```
+
+
+```haskell
+λ. :l test.hs
+
+λ. doubleIfSmall 3
+6
+
+λ. doubleIfSmall 300
+300
+```
+
+## Lists
+
+```haskell
+-- "let" allows definitions in GHCi
+λ. let primes = [2,3,5,7,11,13]
+
+λ. primes
+-- We'll improve this a bit later
+[2,3,5,7,11,13]
+
+-- Strings are lists of characters
+λ. ['h','e','l','l','o']
+"hello"
+
+-- List concatenation
+λ. "hello" ++ "world"
+"helloworld"
+
+-- "cons"ing
+λ. 'h' : "ello"
+
+-- Type error
+λ. "h" : "ello"
+
+-- Type error
+λ. 1 : "ello"
+```
+
+## Some list operations
+
+```haskell
+λ. primes !! 3
+7
+
+λ. primes !! 10
+# uh oh
+
+λ. take 3 primes
+[2,3,5]
+
+λ. drop 3 primes
+[7,11,13]
+
+# Lexicographic comparison
+λ. [2,3,5] > [7,11,13]
+False
+
+λ. sum primes
+41
+
+# or 9 `elem` primes
+λ. elem 9 primes
+False
+```
+
+## Ranges
+
+```haskell
+λ. [1..10]
+[1,2,3,4,5,6,7,8,9,10]
+
+λ. ['a'..'t']
+"abcdefghijklmnopqrst"
+
+λ. [1..]
+# Woops! ^C is your friend
+
+λ. [1,3..20]
+[1,3,5,7,9,11,13,15,17,19]
+```
+
+## More list operations
+
+```bash
+# Hooray laziness
+λ. take 10 [1..]
+[1,2,3,4,5,6,7,8,9,10]
+
+λ. "N" ++ take 9 (cycle "an") ++ " Batman!"
+# :-)
+
+λ. head [1..]
+1
+
+λ. tail [1..]
+# Weee
+
+λ. tail [1..5]
+[2,3,4,5]
+```
+
+## Exercises
+
+```haskell
+replicate 3 'a' ⇒ "aaa"
+
+repeat 1 ⇒ [1,1,1,1,1,1, …]
+
+cycle [a,b,c] ⇒ [a,b,c,a,b,c,a,b,c, …]
+```
+
+## Solutions
+
+```haskell
+replicate n x =
+    if n <= 0
+        then []
+        else x : replicate (n-1) x
+
+repeat x = x : repeat x
+
+cycle xs = xs ++ cycle xs
+```
+
+## List comprehensions
+
+```haskell
+λ. [x | x <- [1..10], even x]
+[2,4,6,8,10]
+
+λ. take 10 [x | x <- [1..], x `mod` 3 == 0]
+[3,6,9,12,15,18,21,24,27,30]
+
+λ. [if x < 5 then x+1 else x-2 | x <- [1,3..10]]
+[2,4,3,5,7]
+
+λ. let myLength list = sum [1 | x <- list]
+λ. myLength [1..10]
+10
+
+λ. let myFilter predicate list = [x | x <- list, predicate x]
+λ. myFilter even [1..10]
+[2,4,6,8,10]
+
+# More common:
+λ. let myFilter p xs = [x | x <- xs, p x]
+```
+
+
+
+
+## Exercise
+
+Implement function composition, i.e. a function that takes two functions and
+applies them after each other to a value.
+
+```haskell
+λ. compose sum (replicate 5) 11
+55
+# = sum (replicate 5 (11))
+```
+
+## Solution
+
+```haskell
+compose f g x = f (g x)
+```
+
+```haskell
+-- Standard Haskell:
+(.) f g x = f (g x)
+
+-- Usually used infix like this:
+f . g . h
+```
+
+Function composition is associative: no parentheses required.
+
+## Exercise: function composition
+
+Compute the sum of the squares of the even numbers between 1 and 99.
+
+These might come in handy:
+
+```haskell
+even        -- Check whether a number is even
+filter p    -- Drop all numbers for which `p x` is `False`
+map (^2)    -- square all numbers in a list
+sum         -- Sum up a list
+```
+
+## Solution: function composition
+
+```haskell
+x = (sum . map (^2) . filter even) [1..99]
+
+-- For comparison: list comprehension
+y = sum [ x^2 | x <- [1..99], even x]
+```
+
+## Tuples
+
+```haskell
+λ. (1, "hello")
+(1,"hello")
+
+λ. (1, "hello", 3.0)
+(1,"hello",3.0)
+
+λ. fst (1, "hello")
+1
+
+λ. snd (1, "hello")
+"hello"
+```
+
+## let expressions
+
+```haskell
+-- Syntax:
+let <definitions> in <expression>
+
+-- ("let" without "in" is just GHCi convenience.)
+```
+
+```haskell
+λ. let x = "hello" in x ++ "world"
+"helloworld"
+
+λ. let x = 0:y; y = 1:x in take 10 x
+[0,1,0,1,0,1,0,1,0,1]
+```
+
+## where clauses
+
+```haskell
+-- Syntax:
+<definition> where <definitions>
+```
+
+```haskell
+foo = h ++ ", " ++ w ++ "!"
+  where
+    h = "hello"
+    w = "world"
+```
+
+```haskell
+λ. :r
+λ. foo
+"hello, world!"
+```
+
+## Scope of `where`
+
+`where` clauses span over everything behind their respective `=` sign.
+
+```haskell
+person = (firstName, lastName, age)
+  where
+    firstName = "Haskell"
+    lastName = "Curry"
+    age = century + 16
+      where
+        century = 100 -- only in scope inside the age block
+
+-- Recursive bindings
+alternating = one -- = [1,0,1,0,1,0 ...]
+  where
+    one  = 1 : zero
+    zero = 0 : one
+```
+
+
+## Lambdas
+
+```haskell
+-- Syntax: ASCII approximation to λ
+\<arguments> -> <expression>
+```
+
+```haskell
+λ. (\x -> x ++ "world") "hello"
+"helloworld"
+
+λ. (\x y -> x ++ ", " ++ y ++ "!") "hello" "world"
+"hello, world!"
+```
+
+
+## Lambdas: exercise
+
+Write a function that drops all numbers divisible by 3 or 5 from a list.
+
+```haskell
+λ. filter (\???) [1..100]
+```
+
+```haskell
+-- These might help:
+not True == False
+/= -- unequal operator
+mod 5 3 == 2
+```
+
+## Lambdas: solution
+
+Write a function that drops all numbers divisible by 3 or 5 from a list.
+
+```haskell
+λ. filter (\x -> mod x 3 /= 0 && mod x 5 /= 0) [1..100]
+```
+
+
+
+
+
+# Types and type classes
+
+## Strong type system
+
+- *No* implicit type conversion
+- Types are helpful
+- … but that takes getting used to
+- Type inference makes types unobtrusive
+
+
+
+## Checking types in GHCi
+
+```haskell
+λ. :t "hello"
+:: [Char]
+
+λ. :t True
+:: Bool
+
+λ. :t (True, 'a', "hello")
+:: (Bool, Char, [Char])
+
+λ. :t not
+:: Bool -> Bool
+
+λ. :t fst
+:: (a, b) -> a
+```
+
+
+## Auto-displaying types
+
+```haskell
+λ. :set +t
+λ. "hello"
+"hello"
+it :: [Char]
+```
+
+(`it` is the result of the last computation.)
+
+
+## Currying
+
+```haskell
+:t \yes no prop -> if prop then yes else no
+```
+
+Looks like it should take 3 arguments, like
+
+```haskell
+(a, a, Bool) -> a
+```
+
+but it's actually
+
+```haskell
+a -> a -> Bool -> a
+```
+
+What's with the arrows?
+
+## Currying
+
+```haskell
+cond :: a ->  a ->  Bool -> a
+cond t f p = if p then t else f
+```
+
+- All functions take exactly one argument.
+- *n-ary* functions are *unary* functions returning (n-1)-ary ones.
+- "space" function application is left-associative
+
+    ```haskell
+        cond "yes"  "no"  False
+    = ((cond "yes") "no") False
+    ```
+- `->` in type signatures is thus naturally right-associative
+    ```haskell
+      a ->  a ->  Bool -> a
+    = a -> (a -> (Bool -> a))
+    ```
+
+
+```haskell
+cond                  :: a ->  a      ->  Bool -> a
+cond "yes"            ::       String ->  Bool -> String -- type inference!
+cond "yes" "no"       ::                  Bool -> String
+cond "yes" "no" False ::                          String
+```
+
+## Function types
+
+```haskell
+λ. :t const
+:: a -> b -> a
+
+λ. :t (const, True, not)
+:: (a -> b -> a, Bool, Bool -> Bool)
+
+λ. :t const fst
+:: a -> (b, c) -> b
+
+λ. :t \x -> x ++ "world"
+:: String -> String
+```
+
+## Explicit type annotations
+
+Making types more special than required
+
+```haskell
+λ. :t const
+:: a -> b -> a
+
+λ. :t const :: Integer -> a -> Integer
+:: Integer -> a -> Integer
+
+λ. :t const :: Integer -> String -> Integer
+:: Integer -> String -> Integer
+```
+
+## Defining new types
+
+```haskell
+-- Syntax
+data TypeName <args> = ConstructorA <args>
+      ^              | ConstructorB <args>
+      |              …    ^
+      |                     |
+-- "type constructor"   "value constructors"
+```
+
+```haskell
+data YesNo = Yes
+           | No
+
+data OptionalInteger = Absent
+                     | Some Integer
+
+data ListOfChar = Nil
+                | Cons Char (List Char)
+```
+
+## Parameterized types
+
+```haskell
+data Optional a = Absent | Some a
+-- Some "hello" :: Optional String
+-- Absent :: Optional a
+
+data List a = Nil | Cons a (List a)
+-- Cons 1 (Cons 2 Nil) :: List Integer
+
+data Tuple a b = Tuple a b
+-- Tuple 1 'x' :: Tuple Integer Char
+
+data EitherOr a b = A a | B b
+-- A "hello" :: EitherOr String b
+-- B 1234567 :: EitherOr a      Integer
+```
+
+## Connecting the dots
+
+```haskell
+data Bool = True | False
+data Maybe a = Nothing | Just a
+data Either a b = Left a | Right b
+
+-- With a little syntax cheating
+data [a] = [] | a : [a]
+data (a,b) = (a,b)
+```
+
+## Algebraic data types
+
+All types in Haskell could be defined by combining/nesting
+
+```haskell
+data Void
+data () = ()
+data Either a b = Left a | Right b
+data (a,b) = (a,b)
+data a -> b = <hardwired>
+```
+
+Examples:
+
+```haskell
+Bool         ≅ Either () ()
+Maybe a      ≅ Either () a
+[a]          ≅ Either () (a, List a)
+BinaryTree a ≅ Either a (BinaryTree a, BinaryTree a)
+Triple a b c ≅ (a, (b, c))
+```
+
+## Pattern matching
+
+Value constructors create values of certain types,
+
+```haskell
+Just :: a -> Maybe a
+(:)  :: a -> [a] -> [a]
+Left :: a -> Either a b
+```
+
+Deconstruction is done via pattern matching on the data constructors:
+
+```haskell
+safeHead [] = Nothing
+safeHead (x:xs) = Just x
+
+unEither (Left  l) = l
+unEither (Right r) = r
+
+swapTuple (a,b) = (b,a)
+
+fst (a,_) = a -- "_" ignores matches
+```
+
+Patterns are tried in order, top to bottom.
+
+----------------------
+
+Consider
+
+```haskell
+unLeft (Left l) = l
+```
+
+The compiler can statically check that the `Right` case has been forgotten!
+
+Use `:set -W` to enable these warnings (among others). Now try:
+
+```haskell
+let unCrazy (Left ([], Just b, Right _)) = b
+unCrazy (Right r) = r
+```
+
+## Exercises
+
+Implement:
+
+- `elem x xs`: does `x` appear in `xs`?
+- `++`: append two lists
+- `leftToMaybe`: Convert an `Either` to a `Maybe`
+- `listsEqual`: Check whether two lists are equal
+
+## Exercises: solutions
+
+```haskell
+elem _ [] = False
+elem x (y:ys) = x == y || elem x ys
+
+[]     ++ ys = ys
+(x:xs) ++ ys = x : (xs ++ ys)
+
+leftToMaybe (Left  l) = Just l
+leftToMaybe (Right _) = Nothing
+
+listsEqual [] [] = True
+listsEqual (x:xs) (y:ys) = x == y && listsEqual xs ys
+listsEqual _ _ = False
+```
+
+
+
+## A simple sorting algorithm
+
+```haskell
+--    v---- "pattern matching", more about this later
+sort [] = []
+sort (x:xs) = sort smaller ++ middle ++ sort greater
+  where
+    smaller = [y | y <- xs, y < x]
+    middle  = [x]
+    greater = [y | y <- xs, y >= x]
+```
+
+
+
+## Winterretreat exercise
+
+Given
+
+```haskell
+data Expr = Literal Integer
+          | Add Expr Expr
+
+myExpr = Add (Literal 1) (Add (Literal 2) (Literal 3))
+```
+
+Do the following:
+
+- Sum of all numbers
+- Count number of `Add` nodes
+- List all contained numbers
+
+
+## Winterretreat solution
+
+```haskell
+data Expr = Literal Integer | Add Expr Expr
+
+myExpr :: Expr
+myExpr = Add (Literal 1) (Add (Literal 2) (Literal 3))
+
+sumExpr :: Expr -> Integer
+sumExpr (Literal i) = i
+sumExpr (Add x y) = sumExpr x + sumExpr y
+
+summations :: Expr -> Integer
+summations (Literal _) = 0
+summations (Add x y) = 1 + summations x + summations y
+
+toList :: Expr -> [Integer]
+toList (Literal i) = [i]
+toList (Add x y) = toList x ++ toList y
+```
+
+
+## The `primes` example from the wiki
+
+```haskell
+primes = filterPrime [2..]
+  where
+    filterPrime (p:xs) =
+        p : filterPrime [x | x <- xs, x `mod` p > 0]
+```
+
+
+## Basic type classes
+
+Typeclasses unify common behaviour.
+
+```haskell
+-- Compare for equality: "a" needs to be Eq
+(==) :: Eq a => a -> a -> Bool
+
+-- Compare order: "a" needs to be Ord
+(<) :: Ord a => a -> a -> Bool
+
+-- Convert to String: "a" needs to be Show-able
+show :: Show a => a -> String
+```
+
+- "Types" between `::` and `=>` are called *constraints*.
+- **Pitfall:** Type classes are not OOP classes.
+    - Similar purpose as interfaces/abstract classes
+    - We do not use them for anything OOP-like
+    - Being immutable, there are no member variables
+    - Not intended to hide things, hence no visibility qualifiers
+
+## Defining new instances
+
+```haskell
+data List a = Nil | Cons a (List a)
+
+instance Eq a => Eq (List a) where
+    []     == []      = True
+    (x:xs) == (y:ys)  = x == y && xs == ys
+    _xs    == _ys     = False
+```
+
+Basic type class instances can be auto-generated:
+
+```haskell
+data List a = Nil | Cons a (List a)
+    deriving Eq
+```
+
+## Implementing custom type classes
+
+```haskell
+class TrueIsh a where
+    isTrue :: a -> Bool
+    isTrue = not . isFalse
+
+    isFalse :: a -> Bool
+    isFalse = not . isTrue
+```
+
+```haskell
+instance TrueIsh Bool where
+    isTrue x = x
+instance TrueIsh (Maybe a) where
+    isTrue Nothing  = False
+    isTrue _        = True
+instance TrueIsh [a] where
+    isFalse [] = True
+    isFalse _ = False
+```
+
+## Monoid
+
+```haskell
+class Monoid a where
+    mempty :: a
+    mappend :: a -> a -> a
+
+-- Convenient definition
+(<>) = mappend
+```
+
+Instances should satisfy the laws
+
+```haskell
+mempty <> x  ≡  x               -- "left identity"
+x <> mempty  ≡  x               -- "right identity"
+
+(x <> y) <> z  ≡  x <> (y <> z) -- "associativity"
+```
+
+## Examples of monoids
+
+```haskell
+class Monoid a where
+    mempty :: a
+    mappend :: a -> a -> a
+```
+
+- integers: `0` and `(+)` or `1` and `(*)`
+- lists: `[]` and `(++)`
+- Most containers with the empty container and some form of union
+- `Maybe`: `Nothing` and …
+    - "keep the first `Just` you find"
+    - "keep the last `Just` you find"
+    - "combine the contents of `Just`s"
+- Functions of type `a -> a`: `id` and `(.)`
+- Tuples: component-wise operation
+
+## Cooler examples of monoids
+
+- Git commits with committing and the NOOP commit
+- Git commits with squashing and the empty commit
+- Tests: keep only failing ones
+    - Successful tests as identity
+    - Running both arguments as `mappend`
+- List of rules in a build system
+    - NOOP rule as identity
+    - Considering both rules as `mappend`
+
+## What are monoids good for?
+
+- Many standard functions work for any Monoid: code reuse
+- Monoids parallelize: any chunking of sub-computations yields the same result.
+- Standardized set of laws we know any instance type should obey.
+
+## Laws of typeclasses
+
+- Most typeclasses come with laws.
+    - (==) should be symmetric, `a == b ≡ b == a`
+    - (<) should be transitive, `a < b && b < c ⇒ a < c`
+    - `x <> mempty ≡ x`
+
+These are sometimes called "contracts" elsewhere.
+
+Many consider a class without laws a code smell.
+
+## Checking laws
+
+- Compiler can not enforce laws
+- Programmer's responsibility to ensure them
+- Violating laws can lead to serious bugs
+- **If you violate the Monoid laws, the Haskell police *will* find you.**
+
+## Simple uses of monoids
+
+Monoid allows writing monoid-general functions.
+
+```haskell
+mconcat :: Monoid m => [m] -> m
+mconcat = ???
+
+power :: Monoid a => Integer -> a -> a
+power n x = ???
+-- e.g. power 5 "a" ⇒ "aaaaa"
+```
+
+## Simple uses of monoids
+
+```haskell
+mconcat :: Monoid m => [m] -> m
+mconcat [] = mempty
+mconcat (x:xs) = x <> mconcat xs
+
+power :: Monoid a => Integer -> a -> a
+power n x =
+    if n <= 0 then mempty
+              else x <> power (n-1) x
+```
+
+## What does `power` do?
+
+`power n x` applied to various argument types:
+
+- integers with (+): x*n
+- integers with (*): x^n
+- lists: replicate n x
+- functions: chain a function n times
+
+
+```haskell
+-- Example use: repeatedly modifying data
+optimizeStep :: Program -> Program
+
+optimize :: Integer -> Program -> Program
+optimize steps = power steps optimizeStep
+```
+
+
+
+# Remaining syntax
+
+## Guards
+
+Guards are like top-level "if"s.
+
+```haskell
+myTake n (x:xs)
+  | n <= 0 = []
+  | otherwise = x : myTake (n-1) xs
+myTake _ [] = []
+```
+
+Guards  …
+- … are tried top to bottom (like patterns).
+- … and patterns can be mixed.
+- … are Haskell's `elseIf`
+
+## Exercise: factorial
+
+Implement the factorial function.
+
+## Factorial: Possible solutions
+```haskell
+fac n | n <= 1 = 1
+fac n = n * fac (n-1)
+
+fac2 n
+  | n <= 1 = 1
+  | otherwise = n * fac2 (n-1)
+
+fac3 n = fac3' 1 n
+  where
+    fac3' acc n | n <= 1 = acc
+    fac3' acc n = fac3' (n*acc) (n-1)
+
+fac4 n = product [1..n]
+```
+
+## Exercise: Mergesort
+
+Implement mergesort.
+
+- A list of 0 or 1 elements is sorted.
+- An unsorted list can be split up into sorted parts.
+- Two sorted lists can be combined to a single sorted list.
+
+This might help:
+
+```haskell
+splitIntoHalves :: [a] -> ([a], [a])
+splitIntoHalves xs = splitAt (length xs `div` 2) xs
+                -- Integer division ------^
+```
+
+## Solution:
+
+```haskell
+mergesort :: Ord a => [a] -> [a]
+mergesort [] = []
+mergesort [x] = [x]
+mergesort xs =
+    let (leftHalf, rightHalf) = splitIntoHalves xs
+    in merge (mergesort leftHalf) (mergesort rightHalf)
+
+merge :: Ord a => [a] -> [a] -> [a]
+merge xs [] = xs
+merge [] ys = ys
+merge (x:xs) (y:ys)
+  | x <= y    = x : merge    xs (y:ys)
+  | otherwise = y : merge (x:xs)   ys
+
+splitIntoHalves :: [a] -> ([a], [a])
+splitIntoHalves xs = splitAt (length xs `div` 2) xs
+```
+
+## The actual standard sort
+
+```haskell
+sort = sortBy compare
+sortBy cmp = mergeAll . sequences
+  where
+    sequences (a:b:xs)
+      | a `cmp` b == GT = descending b [a]  xs
+      | otherwise       = ascending  b (a:) xs
+    sequences xs = [xs]
+
+    descending a as (b:bs)
+      | a `cmp` b == GT = descending b (a:as) bs
+    descending a as bs  = (a:as): sequences bs
+
+    ascending a as (b:bs)
+      | a `cmp` b /= GT = ascending b (\ys -> as (a:ys)) bs
+    ascending a as bs   = as [a]: sequences bs
+
+    mergeAll [x] = x
+    mergeAll xs  = mergeAll (mergePairs xs)
+
+    mergePairs (a:b:xs) = merge a b: mergePairs xs
+    mergePairs xs       = xs
+
+    merge as@(a:as') bs@(b:bs')
+      | a `cmp` b == GT = b:merge as  bs'
+      | otherwise       = a:merge as' bs
+    merge [] bs         = bs
+    merge as []         = as
+```
+
+
+
+## Case expressions
+
+Case expressions allow pattern matching on the expression level.
+
+```haskell
+longerThan n xs = case drop n xs of
+    [] -> False
+    _  -> True
+```
+
+(GHC actually translates *all* pattern matching to this form internally.)
+
+```haskell
+-- Syntax:
+case <expression> of
+    <pattern> -> <expression>
+    <pattern> -> <expression>
+    …
+```
+
+## Operator sections
+
+Nice convenience syntax:
+
+```haskell
+(< 1) = \x -> x < 1
+(2 >) = \x -> 2 > x
+(`elem` "abc") = \x -> x `elem` "abc"
+               = \x -> elem x "abc"
+```
+
+
+
+
+# Functional abstractions
+
+## Functions as data
+
+Exercise: given a list of `String`s, convert it to the list of the length of
+them.
+
+```haskell
+length :: [a] -> Int
+-- from Prelude
+
+convert :: [String] -> [Int]
+convert ["", "a", "ab"] ==> [0, 1, 2]
+convert ["hello", "world"] ==> [5, 5]
+```
+
+-------------
+
+Exercise: given a list of `String`s, convert it to the list of the entries
+reversed.
+
+```haskell
+reverse :: [a] -> Int
+-- from Prelude
+
+convert2 :: [String] -> [String]
+convert2 ["", "a", "ab"] ==> ["", "a", "ba"]
+convert2 ["hello", "world"] ==> ["olleh", "dlrow"]
+```
+
+-------------
+
+Exercise: given a list of `String`s, convert it to the list of "did the word
+have an 'a' in it".
+
+```haskell
+hasAnA :: String -> Bool
+hasAnA = …
+
+convert3 :: [String] -> [Bool]
+convert3 = …
+```
+
+-------------
+
+This getting tedious. Is there a pattern? Yes!
+
+Given a function `a -> b`, create a function `[a] -> [b]`.
+
+```haskell
+map :: (a -> b) -> [a] -> [b]
+map f xs = ???
+```
+
+-------------
+
+```haskell
+map :: (a -> b) -> [a] -> [b]
+map _ [] = []                 -- what else could it be?
+map f (x:xs) = f x : map f xs
+```
+
+`map` abstracts over the "apply to each list element" pattern.
+
+## A few more exercises
+
+```haskell
+find :: (a -> Bool) -> [a] -> Maybe a
+find = -- get the first element matching the predicate
+
+zip :: [a] -> [b] -> [(a,b)]
+zip = -- pair entries up, stop when one list is empty
+      -- e.g. zip [1..] "abc" ==> [(1,'a'), (2,'b'), (3,'c')]
+
+zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith = -- combine list elements using a function
+          -- e.g. zipWith (+) [1,2,3] [10,20,30] ==> [11,22,33]
+          -- NB: zip = zipWith (,)
+
+applyAllTo :: a -> [a -> b] -> [b]
+applyAllTo = -- Apply each function to the value
+             -- applyAllTo 3 [even, odd, (> 3)] = [False, True, False]
+```
+
+## Solutions
+
+```haskell
+find _ [] = Nothing
+find p (x:xs) | p x = Just x
+              | otherwise = find p xs
+
+zip (x:xs) (y:ys) = (x,y) : zip xs ys
+zip _ _ = []
+-- or
+zip = zipWith (,)
+
+zipWith' f (x:xs) (y:ys) = f x y : zipWith f xs ys
+zipWith' _ _ _ = []
+-- or
+zipWith f xs ys = map (\(x,y) -> f x y) (zip xs ys)
+
+applyAllTo _ [] = []
+applyAllTo x (f:fs) = f x : applyAllTo x fs
+-- or
+applyAllTo x = map (\f -> f x)
+```
+
+## Revisiting `map`
+
+- Given a `Maybe String`, calculate the length of the `String`, if present.
+- Given a `Maybe String`, reverse the `String`, if present.
+- Given a `Maybe String`, check whether the `String` contains an "a", if
+  present.
+
+```haskell
+maybeMap :: (a -> b) -> Maybe a -> Maybe b
+maybeMap = ???
+```
+
+## What do `map` and `maybeMap` have in common?
+
+```haskell
+maybeMap :: (a -> b) -> Maybe a -> Maybe b
+     map :: (a -> b) -> [a]     -> [b]
+```
+
+We expect these contracts to hold:
+
+- Mapping over an "empty thing" does nothing
+- Mapping visits each entry exactly once
+- Mapping does neither drop elements, nor invent new ones
+
+That sounds like something we can abstract over!
+
+## The `Mappable` class
+
+Let's unify this behaviour!
+
+```haskell
+class Mappable m where
+    mapOver :: (a -> b) -> m a -> m b
+```
+
+This works out if `m` is `Maybe` or `[]`:
+
+```haskell
+instance Mappable [] where
+    mapOver = map
+instance Mappable Maybe where
+    mapOver = maybeMap
+```
+
+And we require the contracts mentioned earlier to hold.
+
+## What's `Mappable` good for?
+
+- Abstraction simplifies thinking and libraries.
+- Anything that uses `mapOver` is generic to *any* `Mappable`.
+    ```haskell
+    mapTwo :: Mappable m => (b -> c) -> (a -> b) -> m a -> m c
+    mapTwo f g mappable = mapOver f (mapOver g mappable)
+    ```
+
+## `Mappable` is so useful it's standard
+
+And it's called `Functor`.
+
+```haskell
+class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+
+instance Functor [] …
+instance Functor Maybe …
+instance Functor (a,) …
+instance Functor (Either a) …
+-- getting fancier
+instance Functor Parser …
+instance Functor IO …
+instance Functor Stateful …
+```
+
+Instances should satisfy the *Functor laws*:
+
+```haskell
+fmap id ≡ id   -- where id x = x
+fmap f . fmap g ≡ fmap (f . g)
+```
+
+## First Functor law
+
+```haskell
+fmap id ≡ id
+-- "fmapping a NOOP is a NOOP"
+```
+
+Consequence: The shape of the data is not changed by `fmap`.
+
+- No elements are dropped
+- No elements are added
+- No internal counters or similar are present
+
+## Functor laws: example implications
+
+- `Maybe`: A Just stays a Just, a Nothing stays a Nothing
+- Lists: [] stays [], no elements are invented or dropped
+- Parser: the parser behaves the same way (parses the same input), only the
+  output data is modified
+- Tree: Balance, height, overall shape stays the same; only labels of nodes may
+  change
+- `IO`: Perform the same operations on disk/network/..., but modify the
+  data we retrieve
+
+## Second Functor law
+
+Since the first law implies the second, this one is free. Hooray!
+
+
+# I/O
+
+## The `IO` type
+
+- `IO a` = "Subroutine that computes an `a`"
+- Compiler built-in, but not otherwise special type
+- Values of type `IO a` are called *actions*
+- Actions need to be *performed* to obtain the result
+- Side-effects can happen in `IO` (and only in `IO`!)
+- What happens in `IO` stays in `IO`
+
+## Example values
+
+```haskell
+getLine :: IO String
+-- A subroutine that computes a String when run
+
+putStrLn :: String -> IO ()
+-- Produces no meaningful result, just ()
+-- Prints its argument as a side-effect
+
+readFile :: String -> IO String
+
+-- Possible user-defined value
+readFileIfPresent :: IO (Maybe String)
+```
+
+## `do` notation
+
+```haskell
+main :: IO ()
+main = do
+    putStrLn "What is your name?"
+    name <- readLine
+    putStrLn ("Hello, " ++ name ++ "!")
+```
+
+- `IO` actions to the right of `<-` are *performed*.
+- The resulting value is *bound* to the left hand side.
+- `IO` actions on their own line without a `<-` are performed, but the result
+  is discarded. Useful if we're only interested in a side-effect, such as
+  printing.
+
+## `pure`
+
+`pure` gets us any value inside an `IO` context.
+
+```haskell
+--      v --- any value
+pure :: a -> IO a
+--            ^ --- Program that (only) computes that value
+```
+
+Together with `do` notation, `pure` is the bread and butter of `IO` in Haskell.
+
+
+--------
+
+Pitfall: "pure" can also be written "return".
+
+- `return` is something completely different than in C or Java.
+- `return` doesn't do any sort of "jumping out", anywhere, ever.
+
+To avoid confusion, we'll only be using "pure".
+
+```haskell
+world :: IO String
+world = do
+    pure "hello" -- has no effect at all!
+    pure "world"
+```
+
+----------------
+
+```haskell
+readFileIfPresent file =
+    fileExists <- doesFileExist file
+    if fileExists
+        then do
+            contents <- readFile file
+            pure (Just contents)
+        else pure Nothing
+```
+
+
+
+
+## No escape
+
+There is no
+
+```haskell
+runIO :: IO a -> a
+```
+
+- `IO` allows any side effects
+- No `IO` *guarantees no side effects*
+
+The guarantee you get by the absense of something is one of the most
+important benefits of a good type system.
+
+## Smelly code
+
+Absence of something in a type is a powerful tool.
+
+```haskell
+length :: [a] -> IO Int
+
+encrypt :: String -> IO String
+
+doStuff :: IO a -> Integer
+```
+
+## Exercise
+
+```haskell
+runAll :: [IO a] -> IO ()
+-- "Run all the actions contained in a list."
+
+-- e.g.
+-- runAll [putStrLn "hello", putStrLn "world"]
+-- →  prints "hello\nworld\n" when performed
+```
+
+## Solution
+
+```haskell
+runAll [] = pure ()
+runAll (action:rest) = do
+    action
+    runAll rest
+```
+
+## `IO` as a `Functor`
+
+- Functor changes the data without changing the shape of the data structure.
+- The "shape" of an `IO a` is the side effects it performs.
+- The data associated to `IO a` is the `a`.
+
+```haskell
+fmapIO :: (a -> b) -> IO a -> IO b
+fmapIO f action = do
+    x <- action
+    pure (f x)
+```
+
+## Exercise: `IO` as a `Functor`
+
+```haskell
+-- Given
+readFile :: String -> IO String
+length :: String -> Int
+
+-- implement
+getFileLength :: String -> IO Int
+getFileLength = ???
+```
+
+## Solution: `IO` as a `Functor`
+
+```haskell
+getFileLength :: String -> IO Int
+getFileLength filename = fmap length (readFile filename)
+```
+
+
+
+
+
+# Haskell specialities
+
+## Totality
+
+"Any valid (= well-typed) input produces valid output"
+
+- Totality
+    - Don't use exceptions in pure code
+    - Don't write non-terminating functions either
+    - Types work out? You may use it.
+- Partiality
+- Could this be null? Could it be negative? Could it throw?
+    - Requires thinking when certain functions are valid
+    - Move thinking to the compiler
+
+## Shaming non-total functions
+
+```haskell
+head :: [a] -> a
+-- head *does not exist*, the type is a lie. Very few valid uses.
+
+maximum :: Ord a => [a] -> a
+-- Does not exist either. Don't use it.
+
+cycle :: [a] -> [a]
+-- Does not exist for empty lists.
+```
+
+## Immutability, referential transparency
+
+- Functions are functions in the mathematical sense.
+- `x = 3` makes `3` a synonym for `x`.
+- `f x = …` makes `f x` a synonym for `…`.
+- `p = putStrLn "hello"` makes `p` a synonym for `putStrLn "hello"`.
+
+You can unconditionally (!!) replace values with their definitions without
+altering program correctness. `f x` is *identical* to the value it computes.
+(Up to efficienty of recomputing vs. sharing results of course.)
+
+- `x = 3; x = 4` means `3 = 4`, and the compiler rejects it.
+- Referential transparency is closely related to immutability.
+
+## Immutable mutability
+
+Replacability holds even when `IO` is involved:
+
+```haskell
+main = do
+    putStrLn "hello"
+    putStrLn "hello"
+
+main' = do
+    let hi = putStrLn "hello"
+    hi
+    hi
+```
+
+Refactoring definitions out of code holds in the following special cases:
+
+- Always.
+
+## Benefits
+
+"Equational reasoning":
+
+- Program transformations by inserting definitions. "Can I simplify this?"
+- Verify program correctness (even on large scales!)
+
+## Laziness
+
+Define what you want, worry about how much later.
+
+- Infinite structures
+    - List of all primes
+    - Search tree of all possible answers
+    - Generation and consumption separated
+- Lazy functions compose, period. Eager ones don't.
+    - Haskell: `(sum . take 10) [1..]` works
+    - C: `sum(take(10, allNats))` is an infinite loop
+- Introducing laziness into a strict language is hard.
+- Introducing strictness into a lazy language is easy.
+
+## Exercise:
+
+- Split a list in halves of equal length.
+    ```haskell
+    splitHalf :: [a] -> ([a], [a])
+    -- (a,b) = splitHalf x  ⇒  a ++ b ≡ x
+    ```
+- Get every 2nd element of a list.
+    ```haskell
+    half [1..10]  ⇒  [1,3,5,7,9]
+    ```
+- Write splitHalf so it works on any list, including infinite ones.
+
+## Types and inference
+
+Safety or convenience? Both!
+
+- Types guarantee logical consistency of a program
+- Compiler can infer most types
+    - exception: type classes are sometimes ambiguous, e.g. `show . read`
+
+
+
+# Functor: one level further
+
+## Review
+
+Recall: `Functor` changes all values without changing the shape of the
+structure.
+
+What if we *do* want to change it though?
+
+## Revisiting `Maybe`
+
+```haskell
+fmapMaybe :: (a -> b) -> Maybe a -> Maybe b
+```
+
+`fmap` leaves `Just`s `Just`s and `Nothing`s `Nothing`s.
+
+```haskell
+andThenMaybe :: Maybe a -> (a -> Maybe b) -> Maybe b
+andThenMaybe x f = case x of
+    Nothing -> Nothing
+    Just x  -> f x
+```
+
+- Similar to `fmapMaybe`.
+- `Just`s can change to `Nothing`s, depending on `f`.
+- `Nothing`s stay `Nothing`s.
+
+----------------------------------
+
+Typical use case: chaining of functions that might fail
+
+```haskell
+-- Map k v = keys k --> values v
+lookup3d :: (a,b,c) -> Map a (Map b (Map c x)) -> Maybe x
+
+lookup3d (x,y,z) someMap =
+    case lookup x someMap of
+        Nothing -> Nothing
+        Just someMap' -> case lookup y someMap' of
+            Nothing -> Nothing
+            Just someMap'' -> case lookup z someMap'' of
+                Nothing -> Nothing
+                Just result -> Just result
+
+=
+
+lookup3d (x,y,z) someMap =
+    lookup x someMap
+        `andThenMaybe` lookup y
+            `andThenMaybe` lookup z
+                `andThenMaybe` Just
+```
+
+A value is passed through all the functions, and if a `Nothing` occurs,
+the computation aborts.
+
+
+## Revisiting `IO`
+
+```haskell
+fmapIO :: (a -> b) -> IO a -> IO b
+```
+
+`fmap f action` does the same side effects as `action`, but modifies its
+computed end result.
+
+- What if we want to react differently on each result?
+- `fmap` can't make decisions on the `IO` level, only on the `a` level
+- Abort computation if a condition isn't met? Nope, can't do it
+
+## Reacting on previous results
+
+```haskell
+andThenIO' :: (a -> IO b) -> IO a -> IO b
+--                  ^--- that wasn't there in fmap
+
+andThenIO :: IO a -> (a -> IO b) -> IO b
+andThenIO action f = do
+    x <- action
+    f x
+```
+
+```haskell
+getLine `andThenIO` \input ->
+    putStrLn input `andThenIO` \whatever ->
+        pure ()
+-- is the same as
+do input <- getLine
+   whatever <- putStrLn input
+   pure ()
+```
+
+## Observing similarities
+
+```haskell
+andThenMaybe :: Maybe a -> (a -> Maybe b) -> Maybe b
+andThenIO    :: IO a    -> (a ->    IO b) -> IO b
+```
+
+-------------------------------
+
+There is a function that does as little as possible:
+
+```haskell
+Just :: a -> Maybe a
+pure :: a -> IO a
+```
+
+-------------------------------
+
+`andThen` doing as little as possible does nothing:
+
+```haskell
+  foo `andThenMaybe` Just
+= case x of Nothing -> Nothing; Just x = Just x
+= foo
+```
+
+```haskell
+  action `andThenIO` pure
+= do x <- action; pure x
+= action
+```
+
+-------------------------------
+
+Providing a simple value and doing something is the same as doing it directly:
+
+```haskell
+  Just x `andThenMaybe` f
+= case Just x of Nothing -> Nothing; Just y -> f y
+= f x
+```
+
+```haskell
+  pure x `andThenIO` f
+= do y <- pure x; f y
+= f x
+```
+
+-------------------------------
+
+We can reproduce `fmap`, so we're more powerful:
+
+```haskell
+  foo `andThenMaybe` \result -> Just (f result)
+= case foo of
+    Nothing -> Nothing
+    Just x  -> (\result -> Just (f result)) x
+= case foo of
+    Nothing -> Nothing
+    Just x -> Just (f x)
+= fmap f foo
+```
+
+```haskell
+  action `andThenIO` \result -> pure (f result)
+= do x <- action
+     (\result -> pure (f result)) x
+= do x <- action
+     pure (f x)
+= fmap f action
+```
+
+## Let's write a typeclass!
+
+```haskell
+class Functor f => Chainable f where
+    noop :: a -> f a
+    andThen :: f a -> (a -> f b) -> f b
+
+instance Chainable Maybe where
+    noop x = Just x
+    andThen x f = andThenMaybe x f
+
+instance Chainable IO where
+    noop x = pure x
+    andThen x f = andThenIO x f
+```
+
+## Laws
+
+```haskell
+noop x `andThen` f  ≡  f x
+qux `andThen` noop  ≡  qux
+qux `andThen` (noop . f)  ≡  fmap f qux
+```
+
+
+
+# And now for something completely different
+
+## Writing a JavaScript frontend with Haskell
+
+- Javascript is hard to write on large scales
+- Many languages are already based on transpiling to Javascript
+    - CoffeeScript
+    - PureScript
+    - Transpilation via emscripten: LLVM -> JS
+
+Why not Haskell?
+
+## Just kidding.
+
+(Although projects like that exist and they're awesome.)
+
+## `Chainable` is so useful it's standard
+
+- Surprise! `Chainable` is `Monad`.
+- Nobody knows why exactly monads are called monads.
+
+- `andThen` is the operator `>>=`, pronounced "bind".
+- `noop` is called `pure`
+
+Modulo superclasses,
+
+```haskell
+class Monad m where
+    (>>=) :: m a -> (a -> m b) -> m b
+
+instance Monad Maybe where
+    Nothing >>= _ = Nothing
+    Just x  >>= f = f x
+
+instance Monad IO where
+    -- abstract
+
+-- And lots of other instances
+```
+
+## Previous examples rewritten
+
+```haskell
+lookup3d (x,y,z) someMap =
+    lookup x someMap
+        `andThenMaybe` lookup y
+            `andThenMaybe` lookup z
+                `andThenMaybe` Just
+
+=
+
+lookup3d (x,y,z) someMap =
+    lookup x someMap >>= lookup y >>= lookup z
+```
+
+```haskell
+cat
+    = getLine `andThenIO` \input ->
+        putStrLn input `andThenIO` \_whatever -> pure ()
+    = getLine >>= putStrLn >>= \_whatever -> pure ()
+    = getLine >>= putStrLn
+```
+
+
+## This is … *weird*
+
+1. Comprehensible explanation
+2. Practical explanation
+3. Correct explanation
+
+**You may choose only two.**
+
+- 1+2: What I tried so far
+- 1+3: Study the mathematical background
+- 2+3: Requires already understanding monads
+
+## Correct explanation
+
+A `Monad` is something that
+
+- Has
+    - `fmap :: (a -> b) -> m a -> m b`
+    - `pure :: a -> m a`
+    - `(>>=) :: m a -> (a -> m b) -> m b`
+- Satisfies the laws
+    - `pure x >>= f  ≡  f x`
+    - `mx >>= pure  ≡  mx`
+    - `(mx >>= f) >>= g  ≡  mx >>= (\x -> f x >>= g)`
+
+"This is obscure and I don't see the utility"
+
+- Understanding Monad means understanding the utility of the above.
+- Understanding the utility means using it in special cases, and realizing that
+  they all share the same structure.
+- *Use IO, use Maybe, Use [].* You can stare at the above forever without
+  getting any revelation from it.
+
+## A short look at the Monad API
+
+What can we build using only `fmap`, `pure`, `>>=`?
+
+```haskell
+sequence_ :: Monad m => [m a] -> m ()
+-- for IO: Run all actions in the list. (Previous exercise!)
+-- for Maybe: Check whether there is a `Nothing` in the list.
+
+mapM :: Monad m => (a -> m b) -> [a] -> m [b]
+-- for Maybe: transform a list and collect the Justs;
+--            abort to Nothing if one result is Nothing
+-- for IO: Perform many parameterized actions and collect the results
+--         Example: mapM_ (readFileLine file) [12, 44, 92]
+
+join :: Monad m => m (m a) -> m a
+-- for Maybe: Flatten a nested structure; `Nothing` if
+--            there's a `Nothing` anywhere.
+-- for lists: Standard list flattening
+```
+
+## Monads are not …
+
+- Monads are not impure.
+- Monads are not about effects.
+- Monads are not about state.
+- Monads are not about imperative sequencing.
+- Monads are not about IO.
+- Monads are not dependent on laziness.
+- Monads are not a "back-door" in the language to perform side-effects.
+- Monads are not an embedded imperative language inside Haskell.
+- Monads do not require knowing abstract mathematics.
+
+Source: http://dev.stephendiehl.com/hask/#monadic-myths
+
+
+
+
+
+
+
+# Cool examples
+
+## STM
+
+## Parsers
+
+## A simple parser type
+
+```haskell
+data Parser a = Parser { parse :: String -> [(a, String)] }
+```
+
+- Input: `String`
+- Output: list of possible parse results
+
+## Simple parsers
+
+```haskell
+anyChar :: Parser Char
+anyChar = Parser (\input -> case input of
+    [] -> []
+    c:cs -> [(c, cs)] )
+
+succeed :: a -> Parser a
+succeed x = Parser (\input -> [(x, input)])
+```
+
+```haskell
+λ. parse anyChar "hello"
+[('h',"ello")]
+
+λ. parse (succeed 5) "hello"
+[(5,"hello")]
+```
+
+## Failing parsers
+
+```haskell
+char :: Char -> Parser Char
+char x = Parser (\input -> case input of
+    c:rest | c == x -> [(x,rest)]
+    _otherwise -> [] )
+```
+
+```haskell
+λ. parse (char 'h') "hello"
+[('h',"ello")]
+
+λ. parse (char 'x') "hello"
+[]
+```
+
+## Combining parsers
+
+Building parsers out of small pieces
+
+```haskell
+twice :: Parser a -> Parser (a,a)
+twice p = Parser (\input -> case parse p input of
+    xs -> concat (
+        map (\(x,rest) ->
+            map (\(y,rest') ->
+                ((x,y),rest')) (parse p rest)) xs) )
+```
+
+```haskell
+λ. parse (twice anyChar) "hello"
+[(('h','e'),"llo")]
+```
+
+Seems to work. But is it correct?
+
+--------------
+
+```haskell
+many :: Parser a -> Parser [a]
+many p = Parser (\input -> case parse p input of
+    xs -> concat (
+        map (\(x,rest) ->
+                map (\(moreStuff,rest') ->
+                        ((x:moreStuff), rest') )
+                    (parse (many p) rest) )
+            xs ))
+```
+
+- Typechecks
+- Unreadable
+- Incomprehensible
+
+```haskell
+λ. parse (many anyChar) "hello"
+[]
+```
+
+> - Wrong
+
+-----------
+
+Fix: parser failure of `p` does not mean failure of `many p`.
+
+```haskell
+many :: Parser a -> Parser [a]
+many p = Parser $ \input -> case parse p input of
+    [] -> [([], input)] -- !!!
+    xs -> concat (
+        map (\(x,rest) ->
+                map (\(moreStuff,rest') ->
+                        ((x:moreStuff), rest'))
+                    (parse (many p) rest))
+            xs)
+```
+
+------
+
+
+Wrong. This is greedy, when all the other ungreedy results would
+be right as well.
+
+```haskell
+λ. parse (many anyChar) "hello"
+[("hello","")]
+-- should be [("hello",""),("hell","o"),("hel","lo"),("he","llo"),("h","ello")]
+```
+
+## A better approach?
+
+What do we need to combine parsers?
+
+- Unconditional success
+- Unconditional failure
+- Modify parse results
+- React on intermediate results
+
+--------
+
+```haskell
+succeed :: a -> Parser a
+succeed x = Parser (\input -> [(x, input)])
+
+failP :: Parser a
+failP = Parser (\_input -> [])
+
+react :: Parser a -> (a -> Parser b) -> Parser b
+react p f = Parser (\input ->
+    concat [parse (f a) rest | (a, rest) <- parse p input] )
+
+modifyResult :: (a -> b) -> Parser a -> Parser b
+modifyResult f p = p `react` (\a -> succeed (f a))
+```
+
+```haskell
+twice :: Parser a -> Parser (a,a)
+twice p =
+    p `react` \a ->
+    p `react` \b ->
+    succeed (a,b)
+```
+
+-------------------
+
+We just stumbled upon a monad.
+
+```
+-- Assuming a Monad Parser instance with
+fmap = modifyResult
+pure = succeed
+(>>=) = react
+```
+
+```haskell
+twice :: Parser a -> Parser (a,a)
+twice p = do
+    x <- p
+    y <- p
+    pure (x,y)
+```
+
+------
+
+Functions we get for free (with P = Parser):
+
+- `sequence`: apply a list of parsers, collect results
+    ```haskell
+    parseNTimes :: Int -> P a -> P [a]
+    parseNTimes n p = sequence (replicate n p)
+    ```
+- `liftA` family
+    ```
+    liftA2 :: (a -> b -> c) -> P a -> P b -> P c
+
+    liftA2 (,)  :: P a -> P b -> P (a,b)
+    liftA3 (,,) :: P a -> P b -> P c -> P (a,b,c)
+    ```
+- `traverse`
+    ```
+    traverse :: (a -> P b) -> [a] -> P [b]
+
+    string :: String -> P String
+    string = traverse char
+    ```
+
+## Exercise
+
+Parse alternatives:
+
+```haskell
+(<||>) :: Parser a -> Parser a -> Parser a
+p1 <||> p2 = -- ???
+```
+
+```haskell
+parse (char '1' <||> char '2') "2hello"
+[('2',"hello")]
+```
+
+Multiple alternatives:
+
+```haskell
+anyOf :: [Parser a] -> Parser a
+anyOf ps = -- ???
+
+λ. parse (anyOf [char '1', char '2']) "2hello"
+[('2',"hello")]
+```
+
+```haskell
+anyDigit :: Parser Integer
+anyDigit = ???
+```
+
+
+## `many` revisited
+
+Now we can write:
+
+```haskell
+many :: Parser a -> Parser [a]
+many p = do
+    x <- p
+    xs <- many p <||> pure []
+    pure (x:xs)
+```
+
+And finally,
+
+```haskell
+λ. parse (many anyChar) "hello"
+[("hello",""),("hell","o"),("hel","lo"),("he","llo"),("h","ello")]
+```
+
+
+
+
+## Speculative parallelism
+
+This is speculative parallism implemented using Haskell/GHC.
+
+```haskell
+spec :: Eq a => a -> (a -> b) -> a -> b
+spec g f a = let s = f g in s `par` if g == a then s else f a in spec
+```
+
+`par` hints at the compiler that evaluating its first argument in parallel
+might be a good idea. The rest is basic standard Haskell. It was implemented
+after reading a 12-page paper that tries to do the same in C# by Edward Kmett
+in a Reddit post.
+
+---
+
+Add two minor modifications,
+
+- Abstract over the equality function
+- No speculation with only one thread
+
+and you end up with the code found in the actual library:
+
+```haskell
+specBy :: (a -> a -> Bool) -> a -> (a -> b) -> a -> b
+specBy cmp guess f a
+  | numCapabilities == 1 = f $! a
+  | otherwise = speculation `par`
+      if cmp guess a
+          then speculation
+          else f a
+  where speculation = f guess
+```
