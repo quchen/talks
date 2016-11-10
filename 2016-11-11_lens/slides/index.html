@@ -1,0 +1,325 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Lenses and stuff</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/solarized.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+
+
+
+
+
+<!-- Titel-Slide -->
+<section>
+    <section>
+        <p>
+            Techday, 2016-11-11
+        </p>
+        <h1>Lenses<br/><small>“JQuery on steroids for anything”</small></h1>
+        <p>
+            <a href="mailto:david.luposchainsky@tngtech.com">David Luposchainsky</a><br/>
+            <a href="https://github.com/quchen/">quchen</a> /ˈkuːχn̩/<br/>
+            <a href="http://www.tngtech.com">TNG Technology Consulting</a>
+        </p>
+    </section>
+
+    <section>
+        Slides and demo available online:<br/>
+        <a href="https://github.com/quchen/talks">https://github.com/<strong>quchen</strong>/<strong>talks</strong></a>
+    </section>
+</section>
+
+
+<section>
+    <section>
+        <h2>What are lenses?</h2>
+        <ul>
+            <li>first-class getters/setters</li>
+            <li>compositional</li>
+            <li>very concise</li>
+            <li>not without drawbacks</li>
+        </ul>
+    </section>
+</section>
+<section>
+    <section>
+        <h2>Nested updates awkward</h2>
+        <pre><code class="haskell" data-trim>
+data Atom = Atom { _element :: String
+                 , _point   :: Point }
+
+data Point = Point { _x :: Double
+                   , _y :: Double }
+        </code></pre>
+        Let's move an atom to the right.
+        <div class="fragment">
+        <pre><code class="haskell" data-trim>
+pushAtomRight :: Atom -> Atom
+pushAtomRight (Atom e (Point x y)) = Atom e (Point (x + 1) y)
+        </code></pre>
+        <div class="fragment">
+        <pre><code class="haskell" data-trim>
+pushAtomRight2 a = a { _point = (_point a) { _x = _x (_point a) + 1 }}
+        </code></pre>
+        </div>
+        <div class="fragment">
+        ... same with lens:
+        <pre><code class="haskell" data-trim>
+makeLenses ''Atom
+makeLenses ''Point
+
+pushAtomRight' :: Atom -> Atom
+pushAtomRight' = over (point . x) (+ 1)
+        </code></pre>
+        </div>
+    </section>
+    <section>
+        <h2>Lens types</h2>
+        <pre><code class="haskell" data-trim>
+makeLenses ''Atom
+makeLenses ''Point
+        </code></pre>
+        Generates:
+        <pre><code class="haskell" data-trim>
+element :: Lens' Atom String
+point   :: Lens' Atom Point
+
+x :: Lens' Point Double
+y :: Lens' Point Double
+        </code></pre>
+    </section>
+    <section>
+        <h2>Lenses compose</h2>
+        <pre><code class="haskell" data-trim>
+(.) :: (b -> c) -> (a -> b) -> (a -> c)
+        </code></pre>
+        can be specialized to
+        <pre><code class="haskell" data-trim>
+(.) :: Lens b c -> Lens a b -> Lens a c
+        </code></pre>
+    </section>
+    <section>
+        <h2>Lenses compose</h2>
+        <pre><code class="haskell" data-trim>
+point :: Lens' Atom Point
+x     :: Lens' Point Double
+
+point . x :: Lens' Atom Double
+        </code></pre>
+    </section>
+    <section>
+        <h2>Lenses: summary</h2>
+        <ul>
+            <li>focus on one field of a tuple</li>
+            <li>compose like functions</li>
+        </ul>
+
+
+        <pre><code class="haskell" data-trim>
+view (_1 . _2) ((True, "Hello"), "World")
+==>
+"Hello"
+
+over (_1 . _2) length ((True, "Hello"), "World")
+==>
+((True, 5), "World")
+        </code></pre>
+    </section>
+</section>
+
+<section>
+    <section>
+    <h2>Traversals</h2>
+        <pre><code class="haskell" data-trim>
+(over _1 length . over _2 length) ("Hello", "World")
+==>
+(5, 5)
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>Traversals</h2>
+        <p>= “Multi-lenses”: focus on multiple elements</p>
+
+        <pre><code class="haskell" data-trim>
+over both
+     length
+     ("Hello", "World")
+==>
+(5, 5)
+        </code></pre>
+        <div class="fragment">
+        Traversals also compose.
+        <pre><code class="haskell" data-trim>
+over (both . _2)
+     length
+     ((True, "Hello"), (False, "World"))
+==>
+((True,5), (False,5))
+        </code></pre>
+        </div>
+    </section>
+    <section>
+        <h2>More examples</h2>
+        <div>
+        <pre><code class="haskell" data-trim>
+over (traverse . both)
+     length
+     [("Hello", "World"), ("TNG", "Techday")]
+==>
+[(5,5),(3,7)]
+        </code></pre>
+        </div>
+        <div class="fragment">
+        <pre><code class="haskell" data-trim>
+toListOf (traverse . both . to (++ "!"))
+         [("Hello", "World"), ("TNG", "Techday")]
+==>
+["Hello!","World!","TNG!","Techday!"]
+        </code></pre>
+        </div>
+    </section>
+    <section>
+        <h2>Traversals: summary</h2>
+        <ul>
+            <li>Lenses that can focus on multiple elements</li>
+            <li>Compose with traversals and lenses</li>
+        </ul>
+    </section>
+</section>
+
+<section>
+    <section>
+        <h2>Prisms</h2>
+        <p>“What is a lens for the content of a Just?”</p>
+        </section>
+        <section>
+        <h2>Prisms</h2>
+         <pre><code class="haskell" data-trim>
+over _Just (2^) (Just 8) ==> Just 256
+over _Just (2^) Nothing  ==> Nothing
+         </code></pre>
+         “Touch matching values, ignore others”
+    </section>
+    <section>
+        <h2>Prisms compose <small>(surprise!)</small></h2>
+         <pre><code class="haskell" data-trim>
+over (traverse . _Right)
+     (2^)
+     [Left "Hello", Right 4, Right 8, Left "World"]
+==>
+[Left "Hello", Right 16, Right 256, Left "World"]
+         </code></pre>
+         <pre class="fragment"><code class="haskell" data-trim>
+over (traverse . _Left . _head)
+     toLower
+     [Left "Hello", Right 4, Right 8, Left "World"]
+==>
+[Left "hello", Right 4, Right 8, Left "world"]
+         </code></pre>
+    </section>
+    <section>
+        <h2>Prisms are invertible</h2>
+         <pre><code class="haskell" data-trim>
+view (_Left . _Just) (Left (Just 3))
+==>
+3
+
+review (_Left . _Just) 3
+==>
+Left (Just 3)
+         </code></pre>
+    </section>
+    <section>
+        <h2>Prisms: summary</h2>
+        <ul>
+            <li>Prisms are for sums (“enums”) what<br/>lenses are for products (“tuples”)</li>
+            <li>Compose with traversals and lenses</li>
+            <li>Can be inverted</li>
+        </ul>
+    </section>
+</section>
+<section>
+    <h2>Live demo: JSON + lenses</h2>
+</section>
+<section>
+    <section>
+        <h2>Drawbacks</h2>
+        <ul>
+            <li class="fragment">Operator soup: ^@.. &nbsp; <<>~ &nbsp; <+=</li>
+            <li class="fragment">Name soup: maximumByOf, itraverseOf_, _2'</li>
+            <li class="fragment">Horrendous type errors</li>
+        </ul>
+    </section>
+    <section>
+        <h2>My personal advice</h2>
+        <ul>
+            <li class="fragment">Stick to simple lenses, traversals and prisms</li>
+            <li class="fragment">Give names to optical compositions</li>
+            <li class="fragment">Lens has good nomenclature! Gone is the soup.</li>
+        </ul>
+    </section>
+    <section>
+         <pre><code class="haskell" data-trim>
+"00:00:00" &amp; upon (tail.tail).partsOf (filtered (== '0')) .~ "1234"
+         </code></pre>
+         <pre class="fragment"><code class="haskell" data-trim>
+"00:12:34"
+         </code></pre>
+    </section>
+</section>
+
+
+
+
+
+
+
+
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // More info https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                history: true,
+
+                transition: 'slide',
+                transitionSpeed: 'fast',
+                controls: false,
+                progress: false,
+
+                // More info https://github.com/hakimel/reveal.js#dependencies
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ]
+            });
+        </script>
+    </body>
+</html>
