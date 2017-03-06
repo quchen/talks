@@ -50,6 +50,8 @@
 1. Mile-high overview
 2. Basic language intro
 3. Simple example programs
+
+… sprinkled with exercises.
     </script></section>
 </section>
 
@@ -119,7 +121,7 @@ main = putStrLn "Hello world"
         </code></pre>
 
         <pre class="fragment"><code class="bash" data-trim>
-$ ghc helloworld.hs
+$ stack ghc helloworld.hs
 [1 of 1] Compiling Main   ( helloworld.hs, helloworld.o )
 Linking helloworld …
         </code></pre>
@@ -158,13 +160,27 @@ one = 1
 once   x = x
 square x = x * x
 cube   x = x * square x
+```
+    </script></section>
 
-myNot p = if p then False else True
+    <section data-markdown><script type="text/template">
+## `if` and guards
 
-doubleIfSmall x =
-    if myNot (x > 100)
-        then x * 2
-        else x
+```haskell
+myNot x = if x then False else True
+
+myNot' x
+    | x = False
+    | otherwise = True
+```
+```haskell
+doubleIfSmall x = if myNot (x > 100)
+    then x*2
+    else x
+
+doubleIfSmall' x
+    | myNot (x > 100) = x * 2
+    | otherwise       = x
 ```
     </script></section>
 
@@ -245,20 +261,7 @@ elem x (y:ys) = x == y || elem x ys
         <h2>Exercise</h2>
 
         Implement the <em>take</em> function.
-
-        <pre><code class="haskell" data-trim>
--- take 3 [1..]  ==>  [1,2,3]
-
-take n [] = ...
-take ...
-        </code></pre>
-
-        <pre class="fragment"><code class="haskell" data-trim>
-take 0 xs = []
-take n [] = []
-take n (x:xs) = x : take (n-1) xs
-        </code></pre>
-    </script></section>
+    </section>
 
     <section data-markdown><script type="text/template">
 ## Lambdas
@@ -281,15 +284,6 @@ add3 = \x y z -> x + y + z
         <strong>ProjectEuler #1:</strong> Find the sum of all the multiples of 3 or 5 below 1000.
         </blockquote>
 
-        <pre><code class="haskell" data-trim>
-sum [1,2,3] = 6
-filter (\x -> even x) [1,2,3] = [2]
-True || False = True
-        </code></pre>
-
-        <pre class="fragment"><code class="haskell" data-trim>
-solution = sum (filter (\x -> mod x 3 == 0 || mod x 5 == 0) [1..999])
-        </code></pre>
     </section>
 </section>
 
@@ -324,8 +318,23 @@ solution = sum (filter (\x -> mod x 3 == 0 || mod x 5 == 0) [1..999])
 ```
     </script></section>
 
+    <section data-markdown><script type="text/template">
+
+## Currying
+
+- All functions take exactly one argument
+- »Multiple arguments« means taking multiple single arguments.
+
+```haskell
+map f xs -- Haskell
+map(f)(xs) -- Javascript
+```
+    </script></section>
+
     <section>
         <h2>What do types tell us?</h2>
+
+        What could these functions do?
 
         <pre class="fragment"><code class="haskell" data-trim>
 x :: (Integer, Integer) -> (Integer, Integer)
@@ -337,6 +346,10 @@ y :: (a, a) -> (a, a)
 
         <pre class="fragment"><code class="haskell" data-trim>
 z :: (a, b) -> (b, a)
+        </code></pre>
+
+        <pre class="fragment"><code class="java" data-trim>
+public static &lt;A,B> Pair&lt;B,A> z(Pair&lt;A,B> arg) { … }
         </code></pre>
     </section>
 
@@ -390,15 +403,6 @@ whileDrop xs p = []
 ## Defining new types
 
 ```haskell
--- Syntax
-data TypeName <args> = ConstructorA <args>
-      ^              | ConstructorB <args>
-      |              …    ^
-      |                   |
--- "type constructor"   "value constructors"
-```
-
-```haskell
 data YesNo = Yes
            | No
 
@@ -411,22 +415,36 @@ data ListOfChar = Nil
     </script></section>
 
     <section data-markdown><script type="text/template">
+## Defining new types
+
+```haskell
+-- Syntax
+data TypeName <args> = ConstructorA <args>
+      ^              | ConstructorB <args>
+      |              | ConstructorC <args>
+      |              ⋮   ^
+      |                   |
+-- "type constructor"   "value constructors"
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
 ## Parameterized types
 
 ```haskell
 data Optional a = Absent | Some a
--- Some "hello" :: Optional String
--- Absent :: Optional a
+x1 = Some "hello" :: Optional String
+x2 = Absent :: Optional a
+
+----------------------------------------
 
 data List a = Nil | Cons a (List a)
--- Cons 1 (Cons 2 Nil) :: List Integer
+x3 = Cons 1 (Cons 2 Nil) :: List Integer
+
+----------------------------------------
 
 data Tuple a b = Tuple a b
--- Tuple 1 'x' :: Tuple Integer Char
-
-data EitherOr a b = A a | B b
--- A "hello" :: EitherOr String b
--- B 1234567 :: EitherOr a      Integer
+x4 = Tuple 1 'x' :: Tuple Integer Char
 ```
     </script></section>
 
@@ -460,10 +478,28 @@ fst (x,_) = x
 ```
     </script></section>
 
+    <section data-markdown><script type="text/template">
+## Pattern matching, again again
+
+`case` allows pattern matching inside expressions.
+
+```haskell
+safeHead []     = Nothing
+safeHead (x:xs) = Just x
+
+safeHead' x = case x of
+    []     -> Nothing
+    (y:ys) -> Just y
+```
+
+- GHC desugars all pattern matching to `case` constructs.
+- Guards work in `case` as well
+    </script></section>
+
     <section>
         <h2>Compiler support</h2>
 
-        Enable warnings with <code>:set -Wall</code> in GHCi
+        Enable warnings with <code>:set -Wall</code> in GHCi and load these!
 
         <pre class="fragment"><code class="haskell" data-trim>
 unLeft (Left l) = l
@@ -475,10 +511,21 @@ unCrazy (Right r) = r
         </code></pre>
     </section>
 
+    <section data-markdown>
+## Type classes
+
+- Type classes unify common behaviour
+- Similar to interfaces and abstract classes
+- But …
+    - Multiple inheritance (without any problems!)
+    - Default definitions
+    - Type inference
+    </section>
+
     <section data-markdown><script type="text/template">
+
 ## Basic type classes
 
-Typeclasses unify common behaviour.
 
 ```haskell
 -- Compare for equality: "a" needs to be Eq
@@ -496,6 +543,30 @@ show :: Show a => a -> String
 ## Defining new instances
 
 ```haskell
+data YesNo = Yes | No
+
+instance Eq YesNo where
+    Yes = Yes = True
+    No  = No  = True
+    _   = _   = False
+
+instance Show YesNo where
+    show Yes = "Yes"
+    show No  = "No"
+```
+
+Basic type class instances can be auto-generated:
+
+```haskell
+data YesNo = Yes | No
+    deriving (Eq, Ord, Show)
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Defining new instances
+
+```haskell
 data List a = Nil | Cons a (List a)
 
 instance Eq a => Eq (List a) where
@@ -504,16 +575,13 @@ instance Eq a => Eq (List a) where
     _xs    == _ys     = False
 ```
 
-Basic type class instances can be auto-generated:
-
-```haskell
-data List a = Nil | Cons a (List a)
-    deriving Eq
-```
+(This is what `deriving (Eq) would have given us as well.)
     </script></section>
 
     <section data-markdown><script type="text/template">
 ## Implementing custom type classes
+
+Javascript has a notion of »truthiness«, let’s emulate that!
 
 ```haskell
 class TrueIsh a where
@@ -521,8 +589,12 @@ class TrueIsh a where
     isTrue = not . isFalse
 
     isFalse :: a -> Bool
-    isFalse = not . isTrue
+    isFalse = not . isTrue -- Mutually recursive defaults!
 ```
+
+    </script></section>
+
+    <section data-markdown><script type="text/template">
 
 ```haskell
 instance TrueIsh Bool where
@@ -538,28 +610,153 @@ instance TrueIsh [a] where
 ```
     </script></section>
 
+    <section data-markdown><script type="text/template">
+
+## `Ord`? Let’s `sort`!
+
+```haskell
+sort [] = []
+sort (x:xs) = sort smaller ++ middle ++ sort greater
+  where
+    smaller = [y | y <- xs, y < x]
+    middle  = [x]
+    greater = [y | y <- xs, y >= x]
+```
+
+```bash
+λ. sort [2,3,1,5,4]
+[1,2,3,4,5]
+```
+    </script></section>
+
 </section>
 
 <section>
     <section data-markdown><script type="text/template">
-        # Exercise
+# I/O
+    </script></section>
 
-        Let’s write a binary tree library together!
+    <section data-markdown><script type="text/template">
+## I/O = side effects
+
+> The only purpose of a practical language is to have an effect on the world
+
+How can we reconcile this with purity?
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## The `IO` type
+
+- `IO a` = "Subroutine that computes an `a`"
+- Compiler built-in, but not otherwise special type
+- Values of type `IO a` are called *actions*
+- Actions need to be *performed* to obtain the result
+- Side-effects can happen in `IO` (and only in `IO`!)
+- What happens in `IO` stays in `IO`
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Example values
+
+```haskell
+getLine :: IO String
+-- A subroutine that computes a String when run
+
+putStrLn :: String -> IO ()
+-- Produces no meaningful result, just ()
+-- Prints its argument as a side-effect
+
+readFile :: String -> IO String
+
+-- Possible user-defined value
+readFileIfPresent :: IO (Maybe String)
+```
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## `do` notation
+
+Functional programs looking like imperative ones :-)
+
+```haskell
+main :: IO ()
+main = do
+    putStrLn "What is your name?"
+    name <- readLine
+    putStrLn ("Hello, " ++ name ++ "!")
+```
+
+- `IO` actions to the right of `<-` are *performed*.
+- The resulting value is *bound* to the left hand side.
+- `IO` actions on their own line without a `<-` are performed, but the result
+  is discarded. Useful if we’re only interested in a side-effect, such as
+  printing.
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## `pure`
+
+`pure` gets us any value inside an `IO` context.
+
+```haskell
+--      v---- any value
+pure :: a -> IO a
+--            ^---- Program that (only) computes that value
+```
+
+Together with `do` notation, `pure` is the bread and butter of `IO`.
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+**Pitfall:** »pure« can also be written »return«.
+
+- `return` is something completely different than in C or Java.
+- `return` doesn't do any sort of »jumping out«, anywhere, ever.
+
+```haskell
+world :: IO String
+world = do
+    pure "hello" -- has no effect at all!
+    pure "world"
+```
+
+To avoid confusion, we'll only be using »pure«.
+    </script></section>
+</section>
+
+
+<section>
+    <section data-markdown><script type="text/template">
+
+# Summary
+
+## What’s Haskell all about?
+
+- Define custom types
+- Construct values with data constructors
+- Deconstruct values with pattern matching
+- Code reuse through safety guarantees by the type system
+- Equational reasoning instead of stepping through programs
+- Use `IO` only when necessary
+
     </script></section>
 </section>
 
 <section>
     <section data-markdown><script type="text/template">
-        # Example programs
+        # More exercises
     </script></section>
 </section>
 
-<!-- <pre><code class="haskell" data-trim>
-main = print (x+y)
-x = 1
-y = 2
-a + b = … - - built-in
-</code></pre> -->
+<section>
+    <section data-markdown><script type="text/template">
+        # Case studies
+    </script></section>
+</section>
+
+
+
+
 
 
 
