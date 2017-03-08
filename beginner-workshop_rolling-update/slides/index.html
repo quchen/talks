@@ -32,8 +32,8 @@
 <!-- Titel-Slide -->
 <section>
     <p>
-        MuniHac 2016</br>
-        2nd of September
+        TechDay</br>
+        10th of March 2017
     </p>
     <h1>Haskell beginner workshop</h1>
     <p>
@@ -96,6 +96,12 @@ apps, and web services.*
     <section data-markdown><script type="text/template">
 ### Lazy (evaluation by need)
 
+```haskell
+foo flag = if flag then "hello world" else show expensive
+  where
+    expensive = sum (take 10e10 primes)
+```
+
 **Advantage:** unnecessary computations skipped
 
 **Disadvantage:** unnecessarily unevaluated computations stored
@@ -131,6 +137,17 @@ $ ./helloworld
 Hello world
         </code></pre>
     </section>
+
+    <section data-markdown><script type="text/template">
+## REPL: GHCi
+
+```bash
+$ stack ghci
+…
+λ. 1 + 1
+2
+```
+    </script></section>
 
     <section data-markdown><script type="text/template">
 ## Simple expressions
@@ -174,27 +191,34 @@ myNot' x
     | otherwise = True
 ```
 ```haskell
-doubleIfSmall x = if myNot (x > 100)
-    then x*2
-    else x
+doubleIfSmall threshold x
+  = if myNot (x > threshold)
+        then x*2
+        else x
 
-doubleIfSmall' x
-    | myNot (x > 100) = x * 2
-    | otherwise       = x
+doubleIfSmall' threshold x
+    | myNot (x > threshold) = x * 2
+    | otherwise = x
 ```
     </script></section>
+
 
     <section data-markdown><script type="text/template">
     ```haskell
     λ. :l test.hs
 
-    λ. doubleIfSmall 3
+    λ. doubleIfSmall 100 3
     6
 
-    λ. doubleIfSmall 300
+    λ. doubleIfSmall 100 300
     300
     ```
     </script></section>
+
+
+    <section>
+    <h2>Exercise: Fizzbuzz</h2>
+    </section>
 
     <section data-markdown><script type="text/template">
 ## Lists
@@ -239,16 +263,51 @@ doubleIfSmall' x
     </script></section>
 
     <section>
-        <h2>Pattern matching lists</h2>
+        <h2>Primer: pattern matching</h2>
+
+        Functions are defined by case analysis.
 
         <pre><code class="haskell" data-trim>
-isEmpty []       = True
-isEmpty (x:rest) = False
+myNot2 True  = False
+myNot2 False = True
+        </code></pre>
+        <pre><code class="haskell" data-trim>
+isOne 1 = True
+isOne _ = False -- ›_‹ = don’t care
+        </code></pre>
+
+        <pre><code class="haskell" data-trim>
+greet ""   = "Hello world!"
+greet name = "Hello, " ++ name
+        </code></pre>
+
+        More about this later.
+    </section>
+
+    <section>
+        <h2>Pattern matching lists</h2>
+
+        All lists are in one of two shapes:
+
+        <pre><code class="haskell" data-trim>
+head : tail -- single ›head‹ element, and then another list ›tail‹
+[]          -- empty list
+        </code></pre>
+
+        <pre><code class="haskell" data-trim>
+[1,2,3]
+= 1 : (2 : (3 : []))
+= 1 : 2 : 3 : [] -- : is right-associative
         </code></pre>
 
         <pre class="fragment"><code class="haskell" data-trim>
-swapTop (x:y:rest) = y:x:rest
-swapTop rest       = rest
+null []       = True
+null (x:rest) = False
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+swapFirstTwo (x:y:rest) = y:x:rest
+swapFirstTwo rest       = rest
         </code></pre>
 
         <pre class="fragment"><code class="haskell" data-trim>
@@ -258,9 +317,7 @@ elem x (y:ys) = x == y || elem x ys
     </section>
 
     <section>
-        <h2>Exercise</h2>
-
-        Implement the <em>take</em> function.
+        <h2>Exercises: list functions</h2>
     </section>
 
     <section data-markdown><script type="text/template">
@@ -269,11 +326,13 @@ elem x (y:ys) = x == y || elem x ys
 ```haskell
 isPositive = \x -> x > 0
 
-add3 = \x y z -> x + y + z
+add3 x y z = x + y + z
+add3' = \x y z -> x + y + z
 ```
 
 ```bash
 λ. filter (\x -> mod x 3 == 0) [1..]
+[3,6,9,12,15, …
 ```
     </script></section>
 
@@ -295,9 +354,10 @@ add3 = \x y z -> x + y + z
     <section data-markdown><script type="text/template">
         ## Strong static type system
 
-        - *No* implicit type conversion
-        - Types are helpful
-        - Type inference makes types unobtrusive
+        - Strong
+            - Guarantee of (the absence of) certain things
+            - Type inference hides types
+        - Static: compiler knows types, program doesn’t
     </script></section>
 
     <section data-markdown><script type="text/template">
@@ -353,11 +413,26 @@ public static &lt;A,B> Pair&lt;B,A> z(Pair&lt;A,B> arg) { … }
         </code></pre>
     </section>
 
+    <section data-markdown><script type="text/template">
+## What do types tell us?
+
+```haskell
+foo :: a -> b -> a
+```
+
+- Works for *all* possible `a` (e.g. `Int`, `Char -> Bool`)
+- Does the same thing regardless of `a`
+    - There is no `instanceof` or »type-case«
+    - Not everything supports equality, so this function can’t do that either
+    </script>
+
+    </section>
+
     <section>
         <h2>What do types tell us?</h2>
 
         <pre><code class="haskell" data-trim>
-x :: (a -> Bool) -> [a] -> Integer
+x :: (a -> Bool) -> [b] -> Integer
         </code></pre>
 
         <pre class="fragment"><code class="haskell" data-trim>
@@ -365,7 +440,7 @@ y :: [a] -> [b] -> [(a,b)]
         </code></pre>
 
         <pre class="fragment"><code class="haskell" data-trim>
-z :: Integer -> [a] -> [a]
+z :: Integer -> [b] -> [a]
         </code></pre>
 
         <pre class="fragment"><code class="haskell" data-trim>
@@ -403,14 +478,17 @@ whileDrop xs p = []
 ## Defining new types
 
 ```haskell
-data YesNo = Yes
-           | No
+data YesNo
+    = Yes
+    | No
 
-data OptionalInteger = Absent
-                     | Some Integer
+data OptionalInteger
+    = Absent
+    | Some Integer
 
-data ListOfChar = Nil
-                | Cons Char (List Char)
+data ListOfChar
+    = Nil
+    | Cons Char (List Char)
 ```
     </script></section>
 
@@ -418,13 +496,12 @@ data ListOfChar = Nil
 ## Defining new types
 
 ```haskell
--- Syntax
-data TypeName <args> = ConstructorA <args>
-      ^              | ConstructorB <args>
-      |              | ConstructorC <args>
-      |              ⋮   ^
+data TypeName a b = ConstructorA a
+      ^           | ConstructorB b
+      |           | ConstructorC b [b]
+      |                   ^
       |                   |
--- "type constructor"   "value constructors"
+-- »type constructor«   »value constructors«
 ```
     </script></section>
 
@@ -433,18 +510,30 @@ data TypeName <args> = ConstructorA <args>
 
 ```haskell
 data Optional a = Absent | Some a
-x1 = Some "hello" :: Optional String
-x2 = Absent :: Optional a
 
-----------------------------------------
+x1 :: Optional String
+x1 = Some "hello"
 
-data List a = Nil | Cons a (List a)
-x3 = Cons 1 (Cons 2 Nil) :: List Integer
+x2 :: Optional a
+x2 = Absent
+```
+    </script></section>
 
-----------------------------------------
+    <section data-markdown><script type="text/template">
+## Parameterized types
 
+```haskell
 data Tuple a b = Tuple a b
-x4 = Tuple 1 'x' :: Tuple Integer Char
+
+x4 :: Tuple Integer Char
+x4 = Tuple 1 'x'
+```
+
+```haskell
+data List a = Nil | Cons a (List a)
+
+x3 :: List Integer
+x3 = Cons 1 (Cons 2 Nil)
 ```
     </script></section>
 
@@ -453,7 +542,9 @@ x4 = Tuple 1 'x' :: Tuple Integer Char
 
 ```haskell
 data Bool = True | False
+
 data Maybe a = Nothing | Just a
+
 data Either a b = Left a | Right b
 
 -- With a little syntax cheating
@@ -494,6 +585,10 @@ safeHead' x = case x of
 
 - GHC desugars all pattern matching to `case` constructs.
 - Guards work in `case` as well
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+        ## Exercises: pattern matching
     </script></section>
 
     <section>
@@ -579,35 +674,7 @@ instance Eq a => Eq (List a) where
     </script></section>
 
     <section data-markdown><script type="text/template">
-## Implementing custom type classes
-
-Javascript has a notion of »truthiness«, let’s emulate that!
-
-```haskell
-class TrueIsh a where
-    isTrue :: a -> Bool
-    isTrue = not . isFalse
-
-    isFalse :: a -> Bool
-    isFalse = not . isTrue -- Mutually recursive defaults!
-```
-
-    </script></section>
-
-    <section data-markdown><script type="text/template">
-
-```haskell
-instance TrueIsh Bool where
-    isTrue x = x
-
-instance TrueIsh (Maybe a) where
-    isTrue Nothing  = False
-    isTrue _        = True
-
-instance TrueIsh [a] where
-    isFalse [] = True
-    isFalse _  = False
-```
+## Exercise: type classes
     </script></section>
 
     <section data-markdown><script type="text/template">
@@ -629,6 +696,58 @@ sort (x:xs) = sort smaller ++ middle ++ sort greater
 ```
     </script></section>
 
+    <section data-markdown><script type="text/template">
+## Sneak typeclass preview
+
+```haskell
+class Mappable f where
+    mapp :: (a -> b) -> f a -> f b
+
+instance Mappable [] where
+    -- mapp :: (a -> b) -> [a] -> [b]
+    mapp = map
+
+instance Mappable Maybe where
+    -- mapp :: (a -> b) -> Maybe a -> Maybe b
+    mapp _ Nothing = Nothing
+    mapp f (Just x) = Just (f x)
+```
+
+```bash
+:t mapp
+Mappable f => (a -> b) -> f a -> f b
+```
+    </script></section>
+
+
+    <section data-markdown><script type="text/template">
+## Other common type classes
+
+```haskell
+-- Mapping over things
+fmap :: Functor f => (a -> b) -> f a -> f b -- our »Mappable«
+-- Chaining mappings
+flatMap :: Lalala f => (a -> f b) -> f a -> f b
+```
+
+```haskell
+-- Concatenation
+mconcat :: Monoid m => [m] -> m
+```
+
+```haskell
+-- Traversal, collapse to list
+toList :: Foldable f => f a -> [a]
+```
+
+```haskell
+-- Serialization
+encode :: ToJson a => a -> BitVector
+decode :: FromJson a => BitVector -> Maybe a
+```
+
+→ exercises
+    </script></section>
 </section>
 
 <section>
@@ -639,7 +758,7 @@ sort (x:xs) = sort smaller ++ middle ++ sort greater
     <section data-markdown><script type="text/template">
 ## I/O = side effects
 
-> The only purpose of a practical language is to have an effect on the world
+> The only purpose of a programming language is to have an effect on the world.
 
 How can we reconcile this with purity?
     </script></section>
@@ -647,10 +766,9 @@ How can we reconcile this with purity?
     <section data-markdown><script type="text/template">
 ## The `IO` type
 
-- `IO a` = "Subroutine that computes an `a`"
-- Compiler built-in, but not otherwise special type
-- Values of type `IO a` are called *actions*
-- Actions need to be *performed* to obtain the result
+IO tags values so they may have side effects.
+
+- `IO a` = »Subroutine that computes an `a`«
 - Side-effects can happen in `IO` (and only in `IO`!)
 - What happens in `IO` stays in `IO`
     </script></section>
@@ -682,7 +800,7 @@ Functional programs looking like imperative ones :-)
 main :: IO ()
 main = do
     putStrLn "What is your name?"
-    name <- readLine
+    name <- getLine
     putStrLn ("Hello, " ++ name ++ "!")
 ```
 
@@ -716,11 +834,26 @@ Together with `do` notation, `pure` is the bread and butter of `IO`.
 ```haskell
 world :: IO String
 world = do
-    pure "hello" -- has no effect at all!
-    pure "world"
+    return "hello" -- has no effect at all!
+    return "world"
 ```
 
 To avoid confusion, we'll only be using »pure«.
+    </script></section>
+
+    <section data-markdown><script type="text/template">
+## Working with IO
+
+- Avoid IO whenever possible
+- Break out to effect-free functions often
+- Merge into IO with `pure` when done
+
+```haskell
+example :: IO String
+example = do
+    line <- getLine
+    pure (reverse (map toUpper line))
+```
     </script></section>
 </section>
 
@@ -733,8 +866,8 @@ To avoid confusion, we'll only be using »pure«.
 ## What’s Haskell all about?
 
 - Define custom types
-- Construct values with data constructors
-- Deconstruct values with pattern matching
+    - Construct values with data constructors
+    - Deconstruct values with pattern matching
 - Code reuse through safety guarantees by the type system
 - Equational reasoning instead of stepping through programs
 - Use `IO` only when necessary

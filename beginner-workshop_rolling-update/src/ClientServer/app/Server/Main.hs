@@ -27,14 +27,16 @@ serverLoop host port
 
 
 handleSingleClient :: Socket -> SockAddr -> IO ()
-handleSingleClient socket remoteAddr = do
-    input <- waitForClientInput socket
-    case input of
-        ConnectionError -> putStrLn "Connection error"
-        ClientQuit -> putStrLn "Client quit"
-        ValidMessage message -> do
-            answerMessage remoteAddr message
-            handleSingleClient socket remoteAddr
+handleSingleClient socket remoteAddr = loop
+  where
+    loop = do
+        input <- waitForClientInput socket
+        case input of
+            ConnectionError -> putStrLn "Connection error"
+            ClientQuit -> putStrLn "Client quit"
+            ValidMessage message -> do
+                answerMessage remoteAddr message
+                loop
 
 data MessageResult
     = ConnectionError
