@@ -27,8 +27,8 @@ module Exercises where
 -- Helpful definitions:
 --
 --   - if … then … else
---   - mod 10 5 == True
---   - [1..5] == [1,2,3,4,5]
+--   - mod 10 4  -->  2
+--   - [1..5]  -->  [1,2,3,4,5]
 fizzy :: Int -> String
 fizzy = _implement_me
 
