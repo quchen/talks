@@ -101,18 +101,18 @@ sumOfEvenSquares = _todo
 
 -- Convert a function taking a tuple to a function taking two arguments.
 --
--- >>> curry fst 1 2
+-- >>> curry' fst 1 2
 -- 1
-curry :: ((a, b) -> c) -> a -> b -> c
-curry = _yum_yum
+curry' :: ((a, b) -> c) -> a -> b -> c
+curry' = _yum_yum
 
 -- Inverse of curry: convert a function taking multiple arguments to one taking
 -- a tuple.
 --
--- >>> uncurry (*) (3,4)
+-- >>> uncurry' (*) (3,4)
 -- 12
-uncurry :: (a -> b -> c) -> (a, b) -> c
-uncurry = _ugh
+uncurry' :: (a -> b -> c) -> (a, b) -> c
+uncurry' = _ugh
 
 -- Get the second element of a list, if there is one.
 --
@@ -193,9 +193,9 @@ find' = _todo
 
 
 -- Pair entries up, stop when one list is empty
--- e.g. zip [1..] "abc" ==> [(1,'a'), (2,'b'), (3,'c')]
-zip :: [a] -> [b] -> [(a,b)]
-zip = _todo
+-- e.g. zip' [1..] "abc" ==> [(1,'a'), (2,'b'), (3,'c')]
+zip' :: [a] -> [b] -> [(a,b)]
+zip' = _todo
 
 -- combine list elements using a function
 --
@@ -203,9 +203,9 @@ zip = _todo
 -- [11,22,33]
 --
 -- NB: zip = zipWith (,)
---     zipWith f = map f . zip
-zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
-zipWith = _todo
+--     zipWith' f = map f . zip
+zipWith' :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith' = _todo
 
 -- Apply each function to the value
 --
