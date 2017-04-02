@@ -7,7 +7,7 @@
 -- beginning. Let inference do the work for us!
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
-module Exercises where
+module Solutions where
 
 
 import Text.Read
@@ -49,7 +49,7 @@ fizzy x
 --
 -- >>> cons2 1 2 [3,4,5]
 -- [1,2,3,4,5]
-cons2 x y list = x : (y : list)
+cons2 x y list = x : y : list
 
 -- replicate 3 'a' == "aaa"
 replicate2 0 _ = []
@@ -134,7 +134,7 @@ uncurry' f (x, y) = f x y
 -- Nothing
 head2 :: [a] -> Maybe a
 head2 [] = Nothing
-head2 (x:y:xs) = Just y
+head2 (_:y:xs) = Just y
 
 
 
@@ -182,7 +182,7 @@ mconcat' (x:xs) = mappend x (mconcat' xs)
 --   - Using the built-in `product`
 factorial :: Integer -> Integer
 factorial x
-  | x == 0 = 0
+  | x <= 0 = 0
   | x == 1 = 1
   | otherwise = x * factorial (x-1)
 
@@ -203,7 +203,7 @@ mergesort xs
   where
     -- Merge two ordered lists into one
     merge :: Ord a => [a] -> [a] -> [a]
-    merge (x:xs) (y:ys) = if x < y then x:(merge xs (y:ys)) else y:(merge (x:xs) ys)
+    merge (x:xs) (y:ys) = if x < y then x:merge xs (y:ys) else y:merge (x:xs) ys
     merge [] ys = ys
     merge xs [] = xs
 
@@ -221,9 +221,8 @@ find' predicate [] = Nothing
 -- Pair entries up, stop when one list is empty
 -- e.g. zip' [1..] "abc" ==> [(1,'a'), (2,'b'), (3,'c')]
 zip' :: [a] -> [b] -> [(a,b)]
-zip' (x:xs) (y:ys) = [(x, y)] ++ (zip' xs ys)
-zip' [] _ = []
-zip' _ [] = []
+zip' (x:xs) (y:ys) = (x, y):(zip' xs ys)
+zip' _ _ = []
 
 -- combine list elements using a function
 --
@@ -234,8 +233,7 @@ zip' _ [] = []
 --     zipWith' f = map f . zip
 zipWith' :: (a -> b -> c) -> [a] -> [b] -> [c]
 zipWith' f (x:xs) (y:ys) = [(f x y)] ++ zipWith f xs ys
-zipWith' _ [] _ = []
-zipWith' _ _ [] = []
+zipWith' _ _ _ = []
 
 
 -- Apply each function to the value
@@ -262,7 +260,6 @@ runAll [] = return ()
 runAll (x:xs) = do 
   _ <- x
   runAll xs
-  return ()
 
 
 
@@ -272,7 +269,7 @@ runAll (x:xs) = do
 --   - readFile :: String -> IO String
 --   - length :: String -> Int
 getFileLength :: FilePath -> IO Int
-getFileLength name = ((fmap length) . readFile) name
+getFileLength name = (fmap length . readFile) name
 
 
 
@@ -290,12 +287,9 @@ everyOther _ = []
 
 -- Split a list into halves of equal length (±1).
 -- Easy using `length`, tricky so it works even on infinite lists.
-splitHalf :: [a] -> ([a], [a])
-splitHalf (x:y:xs) = let (xs', ys') = splitHalf xs
-  in (([x]++xs'), ([y]++ys'))
-splitHalf _ = ([], [])
-
-
+splitAtMiddle :: [a] -> ([a], [a])
+splitAtMiddle xs = let half  = div (length xs) 2
+  in (take half xs, drop half xs)
 
 
 -- #############################################################################

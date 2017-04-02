@@ -255,8 +255,8 @@ everyOther = _todo
 
 -- Split a list into halves of equal length (±1).
 -- Easy using `length`, tricky so it works even on infinite lists.
-splitHalf :: [a] -> ([a], [a])
-splitHalf = _a_bit_tricky
+splitAtMiddle :: [a] -> ([a], [a])
+splitAtMiddle = _a_bit_tricky
 
 
 
