@@ -49,17 +49,17 @@ fizzy x
 --
 -- >>> cons2 1 2 [3,4,5]
 -- [1,2,3,4,5]
-cons2 x y list = x : y : list
+cons' x y list = x : y : list
 
 -- replicate 3 'a' == "aaa"
-replicate2 0 _ = []
-replicate2 counter x = x : replicate2 (counter-1) x
+replicate' 0 _ = []
+replicate' counter x = x : replicate' (counter-1) x
 
 -- repeat x == [x,x,x,x,x,x,x,…]
-repeat2 x = x : repeat2 x
+repeat' x = x : repeat' x
 
 -- cycle [a,b,c] == [a,b,c,a,b,c,a,b,c, …]
-cycle2 list = list ++ cycle2 list
+cycle' list = list ++ cycle' list
 
 -- Extract `len` elements from a list, starting with the `start`th one.
 --
@@ -282,7 +282,7 @@ getFileLength name = (fmap length . readFile) name
 
 -- Keep only every other element of a possibly infinite list.
 everyOther :: [a] -> [a]
-everyOther (x:y:xs) = [x] ++ everyOther xs
+everyOther (x:y:xs) = x:(everyOther xs)
 everyOther _ = []
 
 -- Split a list into halves of equal length (±1).
