@@ -282,15 +282,18 @@ getFileLength name = (fmap length . readFile) name
 
 -- Keep only every other element of a possibly infinite list.
 everyOther :: [a] -> [a]
-everyOther (x:y:xs) = x:(everyOther xs)
+everyOther (x:y:xs) = x:everyOther xs
 everyOther _ = []
 
 -- Split a list into halves of equal length (±1).
 -- Easy using `length`, tricky so it works even on infinite lists.
 splitAtMiddle :: [a] -> ([a], [a])
-splitAtMiddle xs = let half  = div (length xs) 2
-  in (take half xs, drop half xs)
-
+splitAtMiddle xs = helper xs (everyOther xs)
+  where 
+    helper (x:xs) (y:ys) = let (a, b) = helper xs ys
+      in (x:a, b)
+    helper xs [] = ([], xs)
+    helper _ _ = ([], [])
 
 -- #############################################################################
 -- Guessing game
