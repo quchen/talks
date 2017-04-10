@@ -7,7 +7,7 @@
 -- beginning. Let inference do the work for us!
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
-module Exercises where
+module Solutions where
 
 
 import Text.Read
@@ -31,7 +31,11 @@ import Text.Read
 --   - mod 10 4  -->  2
 --   - [1..5]  -->  [1,2,3,4,5]
 fizzy :: Int -> String
-fizzy = _implement_me
+fizzy x
+    | mod x 15 == 0 = "FizzBuzz"
+    | mod x 5 == 0 = "Buzz"
+    | mod x 3 == 0 = "Fizz"
+    | otherwise = show x
 
 -- #############################################################################
 -- Lists
@@ -45,16 +49,17 @@ fizzy = _implement_me
 --
 -- >>> cons2 1 2 [3,4,5]
 -- [1,2,3,4,5]
-cons2 = _implement_me
+cons' x y list = x : y : list
 
 -- replicate 3 'a' == "aaa"
-replicate = _implement_me
+replicate' 0 _ = []
+replicate' counter x = x : replicate' (counter-1) x
 
 -- repeat x == [x,x,x,x,x,x,x,…]
-repeat = _implement_me
+repeat' x = x : repeat' x
 
 -- cycle [a,b,c] == [a,b,c,a,b,c,a,b,c, …]
-cycle = _implement_me
+cycle' list = list ++ cycle' list
 
 -- Extract `len` elements from a list, starting with the `start`th one.
 --
@@ -62,7 +67,11 @@ cycle = _implement_me
 -- [2,3,4,5]
 --
 -- Make sure to handle the edge cases!
-slice start len xs = _implement_me
+-- slice start len (x:xs) = slice (start-1) len xs
+-- slice 0     len (x:xs) = x : slice 0 (len-1) xs
+-- slice 0     0   (x:xs) = []
+-- slice _     _   []   = []
+slice start len = take len . drop start
 
 -- Project Euler #1:
 -- Find the sum of all the multiples of 3 or 5 below 1000.
@@ -72,9 +81,11 @@ slice start len xs = _implement_me
 --   - filter (\x -> x > 3) [1,2,3,4,5] = [4,5]
 --   - [1..5]
 --   - True || False
-projectEuler1 = _implement_me
+projectEuler1 = sum (filter(\x -> mod x 3 == 0 || mod x 5 == 0) [1..999])
 
-map = _fill_the_gaps "map f list = [ ??? | ??? <- xs ]"
+map' :: (a -> b) -> [a] -> [b]
+map' _ [] = []
+map' f (x:xs) = f x : map' f xs
 
 
 
@@ -91,7 +102,7 @@ map = _fill_the_gaps "map f list = [ ??? | ??? <- xs ]"
 -- Try solving it in multiple ways!
 --   - with a chain of ».«
 --   - with a list comprehension
-sumOfEvenSquares = _todo
+sumOfEvenSquares = (sum . map(\x -> x^2) . filter even) [1..99]
 
 
 
@@ -105,7 +116,7 @@ sumOfEvenSquares = _todo
 -- >>> curry' fst 1 2
 -- 1
 curry' :: ((a, b) -> c) -> a -> b -> c
-curry' = _yum_yum
+curry' f p1 p2 = f (p1, p2)
 
 -- Inverse of curry: convert a function taking multiple arguments to one taking
 -- a tuple.
@@ -113,7 +124,7 @@ curry' = _yum_yum
 -- >>> uncurry' (*) (3,4)
 -- 12
 uncurry' :: (a -> b -> c) -> (a, b) -> c
-uncurry' = _ugh
+uncurry' f (x, y) = f x y
 
 -- Get the second element of a list, if there is one.
 --
@@ -122,7 +133,8 @@ uncurry' = _ugh
 -- >>> head2 [1]
 -- Nothing
 head2 :: [a] -> Maybe a
-head2 = _todo
+head2 [] = Nothing
+head2 (_:y:xs) = Just y
 
 
 
@@ -133,14 +145,16 @@ myExpr :: Expr
 myExpr = Add (Literal 1) (Add (Literal 2) (Literal 3))
 
 sumOfLiterals :: Expr -> Integer
-sumOfLiterals (Literal x) = _todo
-sumOfLiterals _           = _todo
+sumOfLiterals (Literal x) = x
+sumOfLiterals (Add left right) = sumOfLiterals left + sumOfLiterals right
 
 numberOfAddNodes :: Expr -> Integer
-numberOfAddNodes = _todo
+numberOfAddNodes (Literal _) = 0
+numberOfAddNodes (Add left right) = 1 + numberOfAddNodes left + numberOfAddNodes right
 
 listOfLiterals :: Expr -> [Integer]
-listOfLiterals = _todo
+listOfLiterals (Literal x) = [x]
+listOfLiterals (Add left right) = listOfLiterals left ++ listOfLiterals right
 
 
 -- #############################################################################
@@ -152,7 +166,8 @@ listOfLiterals = _todo
 -- >>> mconcat' [[1,2,3], [4,5], [6]]
 -- [1,2,3,4,5,6]
 mconcat' :: Monoid m => [m] -> m
-mconcat' = _todo
+mconcat' [] = mempty
+mconcat' (x:xs) = mappend x (mconcat' xs)
 
 
 
@@ -166,7 +181,10 @@ mconcat' = _todo
 --   - Pattern matching
 --   - Using the built-in `product`
 factorial :: Integer -> Integer
-factorial = _todo
+factorial x
+  | x <= 0 = 0
+  | x == 1 = 1
+  | otherwise = x * factorial (x-1)
 
 
 
@@ -177,26 +195,34 @@ factorial = _todo
 -- #############################################################################
 
 mergesort :: Ord a => [a] -> [a]
-mergesort = _todo
+mergesort xs
+  | length xs == 0 = []
+  | length xs == 1 = xs
+  | otherwise = let (ys, zs) = splitIntoHalves xs
+    in merge (mergesort ys) (mergesort zs)
   where
     -- Merge two ordered lists into one
     merge :: Ord a => [a] -> [a] -> [a]
-    merge = _todo
+    merge (x:xs) (y:ys) = if x < y then x:merge xs (y:ys) else y:merge (x:xs) ys
+    merge [] ys = ys
+    merge xs [] = xs
 
     -- Split a list into equally sized halves (± 1 element)
     splitIntoHalves :: [a] -> ([a], [a])
-    splitIntoHalves = _todo
+    splitIntoHalves (xs) = splitAt (div (length xs) 2) xs
 
 
 -- Get the first element matching the predicate
 find' :: (a -> Bool) -> [a] -> Maybe a
-find' = _todo
+find' predicate (y:ys) = if predicate y then Just y else find' predicate ys
+find' predicate [] = Nothing
 
 
 -- Pair entries up, stop when one list is empty
 -- e.g. zip' [1..] "abc" ==> [(1,'a'), (2,'b'), (3,'c')]
 zip' :: [a] -> [b] -> [(a,b)]
-zip' = _todo
+zip' (x:xs) (y:ys) = (x, y):(zip' xs ys)
+zip' _ _ = []
 
 -- combine list elements using a function
 --
@@ -206,7 +232,9 @@ zip' = _todo
 -- NB: zip = zipWith (,)
 --     zipWith' f = map f . zip
 zipWith' :: (a -> b -> c) -> [a] -> [b] -> [c]
-zipWith' = _todo
+zipWith' f (x:xs) (y:ys) = [(f x y)] ++ zipWith f xs ys
+zipWith' _ _ _ = []
+
 
 -- Apply each function to the value
 --
@@ -228,7 +256,10 @@ applyAllTo = _todo
 -- hello
 -- world
 runAll :: [IO a] -> IO ()
-runAll = _todo
+runAll [] = return ()
+runAll (x:xs) = do 
+  _ <- x
+  runAll xs
 
 
 
@@ -237,8 +268,8 @@ runAll = _todo
 -- Useful helpers:
 --   - readFile :: String -> IO String
 --   - length :: String -> Int
-getFileLength :: String -> IO Int
-getFileLength = _todo
+getFileLength :: FilePath -> IO Int
+getFileLength name = (fmap length . readFile) name
 
 
 
@@ -251,16 +282,18 @@ getFileLength = _todo
 
 -- Keep only every other element of a possibly infinite list.
 everyOther :: [a] -> [a]
-everyOther = _todo
+everyOther (x:y:xs) = x:everyOther xs
+everyOther _ = []
 
 -- Split a list into halves of equal length (±1).
 -- Easy using `length`, tricky so it works even on infinite lists.
 splitAtMiddle :: [a] -> ([a], [a])
-splitAtMiddle = _a_bit_tricky
-
-
-
-
+splitAtMiddle xs = helper xs (everyOther xs)
+  where 
+    helper (x:xs) (y:ys) = let (a, b) = helper xs ys
+      in (x:a, b)
+    helper xs [] = ([], xs)
+    helper _ _ = ([], [])
 
 -- #############################################################################
 -- Guessing game
@@ -277,4 +310,19 @@ splitAtMiddle = _a_bit_tricky
 --   - "conca" ++ "tenate" ++ "strings"
 guessingGame :: Integer -> IO ()
 guessingGame number = do
-    _todo
+      putStrLn "Guess your number"
+      guess <- getLine
+      case readMaybe guess of
+        Nothing -> do
+          putStr "Please enter a number"
+          guessingGame number
+        Just guessInt -> 
+          case compare number guessInt of
+            LT -> do
+              putStrLn "You guess is too high"
+              guessingGame number
+            GT -> do
+              putStrLn "Your guess is too low"
+              guessingGame number
+            EQ -> putStrLn "You cheated!"
+
