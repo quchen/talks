@@ -1,0 +1,506 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Hindley-Milner</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/solarized.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+
+
+
+
+
+<!-- Titel-Slide -->
+<section>
+    <section>
+        <p>
+            μHUG, 2016-05-23
+        </p>
+        <h1>Hindley-Milner<br/>– Generics, but useful</h1>
+        <p>
+            <a href="mailto:david.luposchainsky@tngtech.com">David Luposchainsky</a><br/>
+            <a href="https://github.com/quchen/">quchen</a> /ˈkuːχn̩/<br/>
+            <a href="http://www.tngtech.com">TNG Technology Consulting</a>
+        </p>
+    </section>
+
+    <section>
+        Slides are available online:<br/>
+        <a href="https://github.com/quchen/talks">https://github.com/<strong>quchen</strong>/<strong>talks</strong></a>
+    </section>
+</section>
+
+
+<section>
+    <section>
+        <h2>What?</h2>
+        <p>Hindley-Milner is a type system for lambda calculus with parametric polymorphism.</p>
+    </section>
+    <section>
+        <h2>Whaaat?</h2>
+        <p>Parametric polymorphism is when we have type parameters.</p>
+        <pre><code class="haskell" data-trim>
+id :: a -> a
+id x = x
+        </code></pre>
+        <p><code>a -> a</code> takes a <em>parameter</em> <code>a</code>.</p>
+    </section>
+    <section>
+        <h2>History</h2>
+        <ul>
+            <li>Hindley, Damas and Milner thought up and formalized the system.</li>
+            <li>ML was the first language to implement it.</li>
+            <li>Haskell = ML + type classes.</li>
+        </ul>
+    </section>
+    <section>
+        <h2>Purpose</h2>
+        <ol>
+            <li><strong>Soundness</strong> – e.g. no segfaults</li>
+            <li><strong>Inference</strong> – compiler can find out types on its own</li>
+        </ol>
+    </section>
+</section>
+
+<section>
+    <section>
+        <h1>Soundness</h1>
+        »Is it safe to run this program, or could it segfault?«
+    </section>
+
+    <section>
+        <h2>Does it typecheck?</h2>
+        <pre><code class="haskell" data-trim>
+id :: a -> a
+id x = x
+
+x :: (Int, String)
+x = (id 2, id "hello")
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+x :: (Int, String)
+x = let id :: a -> a
+        id x = x
+    in (id 2, id "hello")
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+id :: a -> a
+id x = x
+
+x :: (Int, String)
+x = (\f -> (f 2, f "hello")) id
+        </code></pre>
+        <p class="fragment">How to check this programmatically?</p>
+    </section>
+    <section>
+        <h2>Notation</h2>
+            $$ \begin{matrix}
+            \text{Classical} & \text{Type theory} \\
+            \text{it rains} ~\Rightarrow~ \text{road is wet}
+            & \frac{\text{it rains}}{\text{road is wet}}
+            \end{matrix} $$
+    </section>
+    <section>
+        <h2>Typing variables</h2>
+        $$
+            \frac{
+                {\color{lightgrey}(}x : \sigma{\color{lightgrey})} \in \Gamma
+            }{
+                \Gamma \vdash {\color{lightgrey}(}x : \sigma{\color{lightgrey})}
+            } \quad \text{[Variable]}
+        $$
+        »If you have a table, then you can obtain a table.«
+    </section>
+    <section>
+        <h2>Function application</h2>
+        $$
+            \frac{
+                \Gamma \vdash {\color{lightgrey}(}f : \alpha \rightarrow \beta{\color{lightgrey})}
+                \qquad
+                \Gamma \vdash {\color{lightgrey}(}x : \alpha{\color{lightgrey})}
+            }{
+                \Gamma \vdash {\color{lightgrey}(}{\color{lightgrey}(}f\;x{\color{lightgrey})} : \beta{\color{lightgrey})}
+            } \quad \text{[Application]}
+        $$
+
+        <pre><code class="haskell" data-trim>
+show :: Int -> String
+
+ten :: String
+ten = show 10
+        </code></pre>
+    </section>
+    <section>
+        <h2>Abstraction</h2>
+        $$
+            \frac{
+                {\color{lightgrey}(}\Gamma, {\color{lightgrey}(}x : \alpha{\color{lightgrey})}{\color{lightgrey})} \vdash {\color{lightgrey}(}e : \beta{\color{lightgrey})}
+            }{
+                \Gamma \vdash {\color{lightgrey}(}\lambda x . e{\color{lightgrey})} : {\color{lightgrey}(}\alpha \rightarrow \beta{\color{lightgrey})}
+            } \quad \text{[Abstraction]}
+        $$
+        <pre><code class="haskell" data-trim>
+f :: Int -> Bool
+f = \(x :: Int) -> (body :: Bool)
+        </code></pre>
+    </section>
+    <section>
+        <h2>Let expressions</h2>
+        $$
+            \frac{
+                \Gamma \vdash e : \alpha
+                \qquad
+                \Gamma, x : \alpha \vdash y : \beta
+            }{
+                \Gamma \vdash {\color{lightgrey}(}\text{let}~ x = e ~\text{in}~ y{\color{lightgrey})} : \beta
+            } \quad \text{[Let]}
+        $$
+        <pre><code class="haskell" data-trim>
+let id :: a -> a
+    id x = x
+in id 3
+        </code></pre>
+    </section>
+    <section>
+        <h2>Let vs. Lambda+App</h2>
+        $$
+            \frac{
+                \Gamma \vdash e : \alpha
+                \qquad
+                \Gamma, x : \alpha \vdash y : \beta
+            }{
+                \Gamma \vdash \color{red}{\text{let}~ x = e ~\text{in}~ y} : \beta
+            }
+        \quad
+            \frac{
+                \Gamma \vdash e : \alpha
+                \qquad
+                \Gamma, x : \alpha \vdash y : \beta
+            }{
+                \Gamma \vdash \color{red}{(\lambda x . y)\,e} : \beta
+            }
+        $$
+        <pre><code class="haskell" data-trim>
+a = let id :: a -> a
+        id x = x
+    in id 3
+        </code></pre>
+        <pre><code class="haskell" data-trim>
+id :: a -> a
+id x = x
+b = (\f -> f 3) id
+        </code></pre>
+    </section>
+    <section>
+        <h2>Specialization</h2>
+        $$
+            \frac{
+                \Gamma \vdash x : \alpha
+                \qquad
+                \alpha \sqsubseteq \beta
+            }{
+                \Gamma \vdash x : \beta
+            } \quad \text{[Specialization]}
+        $$
+        <pre><code class="haskell" data-trim>
+id :: a -> a
+id x = x
+
+indId :: Int -> Int
+indId = id
+
+eitherId :: Either a b -> Either a b
+eitherId = id
+        </code></pre>
+    </section>
+    <section>
+        <h2>Generation</h2>
+        $$
+            \frac{
+                \Gamma \vdash e : \sigma
+                \qquad
+                \alpha \not\in \text{free}(\Gamma)
+            }{
+                \Gamma \vdash e : \forall \alpha . \sigma
+            } \quad \text{[Generation]}
+        $$
+        <pre><code class="haskell" data-trim>
+id1 ::             a -> a   -- implicit forall
+id2 :: forall a.   a -> a   -- explicit forall
+id3 :: forall a b. a -> a   -- redundant »b«
+        </code></pre>
+    </section>
+    <section>
+        <h2>What’s left to Haskell?</h2>
+        <ul>
+            <li>Type classes (complicated)</li>
+            <li>case expressions (simple)</li>
+            <li>GHC’s type system extensions (very complicated, esp. interactions between them)</li>
+        </ul>
+    </section>
+</section>
+
+
+
+
+
+
+<section>
+    <section>
+    <h1>Unification</h1>
+    »Are these types compatible?«
+    <pre><code class="haskell" data-trim>
+choose p = if p then 1 else "hello"
+    </code></pre>
+    <pre class="fragment"><code class="haskell" data-trim>
+choose p = show (if p then 1 else "hello")
+    </code></pre>
+    </section>
+    <section>
+        <h2>Unification</h2>
+        Goal: find the most general common supertype
+        <pre><code class="haskell" data-trim>
+lefty :: Either Int r
+lefty = Left 1
+
+righty :: Either l String
+righty = Right "hello"
+
+choose :: Bool -> ???
+choose p = if p then lefty else righty
+        </code></pre>
+    </section>
+    <section>
+        <h2>Types</h2>
+        <ul>
+            <li>0-ary (constant): Int, Char, Bool</li>
+            <li>n-ary: Maybe a, a -> b, RWST r w s m a</li>
+            <li>variables: a, b, hamster</li>
+        </ul>
+    </section>
+    <section>
+        <h2>Unification algorithm</h2>
+        $$
+            \text{Either}~a~\text{Int}\rightarrow\text{Int} ~\overset?\approx~ \text{Either}~\text{Char}~(b \rightarrow b)
+        $$
+        <br/>
+        <ol>
+            <li>The type constructor itself has to unify<br/>\(\text{Either} \approx \text{Either} ~ \checkmark\)</li>
+            <li class="fragment">All arguments must match<br/>
+                \(a \approx \text{Char} \Rightarrow a \overset!= \text{Char} ~ \checkmark\)</br>
+                \(\text{Int} \rightarrow \text{Int} \approx b \rightarrow b \Rightarrow \text{Int} \overset!= b ~ \checkmark\)</br>
+            </li>
+            <li class="fragment">Works!</li>
+        </ol>
+    </section>
+</section>
+
+
+
+
+
+<section>
+    <section>
+    <h1>Type inference</h1>
+    »What type does this value have?«
+    <pre><code class="haskell" data-trim>
+x = (id id) (id 5)
+
+y = "hello" ++ if 3 > 5 then "world" else "μHUG"
+
+fac = let fix f = f (fix f)
+      in fix (\rec n -> if n <= 1 then 1 else n * rec (n-1))
+    </code></pre>
+    </section>
+
+    <section>
+        <h2>Algorithm W</h2>
+        »Find the most general type of an expression«
+    </section>
+
+    <section>
+        <h2>Algorithm W</h2>
+        Idea: infer small parts, and collect all constraints generated by unification.
+        <pre><code class="haskell" data-trim>
+id id 5 :: ???
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+(id :: a -> a) (id :: b -> b) (5 :: Int)
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+(id :: a -> a) (id :: b -> b) (5 :: Int)
+    -- ^^^^^^^^^^^^^^^^^^^^^ a must match (b -> b)
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+(id :: (b -> b) -> (b -> b)) (id :: b -> b) (5 :: Int)
+                           -- ^^^^^^^^^^^^^^^^^^^^^ b must match Int
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+(id :: (Int -> Int) -> (Int -> Int)) (id :: Int -> Int) (5 :: Int)
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>Algorithm W</h2>
+        <pre><code class="haskell" data-trim>
+(id :: (Int -> Int) -> (Int -> Int)) (id :: Int -> Int) (5 :: Int)
+                                  -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                  -- This has type Int.
+-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--  So this also has type Int.
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+==> id id 5 :: Int
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>Function application</h2>
+        $$
+        \frac{
+            \Gamma \vdash f : \tau_f \quad \Gamma \vdash x : \tau_x \quad \tau_\varphi = \text{fresh} \quad \text{unify}(\tau_f,\, \tau_x \rightarrow \tau_\varphi)
+        }{
+            \Gamma \vdash f\;x : \tau_\varphi
+        }
+        $$
+    </section>
+
+    <section>
+        <h2>Abstraction</h2>
+        $$
+        \frac{
+            \Gamma , x : \sigma \vdash e : \tau
+        }{
+            \Gamma \vdash \lambda x . e : \sigma \rightarrow \tau
+        }
+        $$
+    </section>
+
+
+</section>
+
+
+<section>
+    <section>
+        <h2>Summary</h2>
+            <pre><code class="haskell" data-trim>
+    typeckeck   :: Definitions -> Either Error ()
+            </code></pre>
+
+            <pre><code class="haskell" data-trim>
+    unification :: Type -> Type -> Either Error MostGeneralSubtype
+            </code></pre>
+
+            <pre><code class="haskell" data-trim>
+    inference   :: Value -> Either Error Type
+            </code></pre>
+    </section>
+    <section>
+        <h2>Omissions</h2>
+        <ul>
+            <li>Polytypes vs. monotypes</li>
+            <li>Type inference details</li>
+            <li>Typechecking/inferring recursive values</li>
+            <li>Polymorphic recursion</li>
+        </ul>
+    </section>
+    <section>
+        <h2>Runnable, well-documented implementation</h2>
+        <a href="https://github.com/quchen/articles/tree/master/hindley-milner">github.com/quchen/articles/tree/master/hindley-milner</a><br/>
+        Or search for »quchen hindley-milner«
+    </section>
+</section>
+
+
+
+
+
+
+<section>
+    <h1>Thanks!</h1>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // More info https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                history: true,
+
+                transition: 'slide',
+                transitionSpeed: 'fast',
+                controls: false,
+                progress: false,
+
+            	math: {
+            		mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js',
+            		config: 'TeX-AMS_HTML-full'  // See http://docs.mathjax.org/en/latest/config-files.html
+            	},
+
+                // More info https://github.com/hakimel/reveal.js#dependencies
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/math/math.js', async: true },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ]
+
+
+                	// other options ...
+            });
+        </script>
+    </body>
+</html>
