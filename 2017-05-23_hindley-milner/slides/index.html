@@ -32,11 +32,11 @@
 
 <!-- Titel-Slide -->
 <section>
-    <section>
+    <section data-background-color="#74c85b" style="color: #ff0;">
         <p>
             μHUG, 2016-05-23
         </p>
-        <h1>Hindley-Milner<br/>– Generics, but useful</h1>
+        <h1 style="color: #fd4;">Hindley-Milner<br/>– Generics, but useful</h1>
         <p>
             <a href="mailto:david.luposchainsky@tngtech.com">David Luposchainsky</a><br/>
             <a href="https://github.com/quchen/">quchen</a> /ˈkuːχn̩/<br/>
@@ -113,12 +113,34 @@ x = (\f -> (f 2, f "hello")) id
         <p class="fragment">How to check this programmatically?</p>
     </section>
     <section>
+        <h2>Our little language</h2>
+        <pre><code class="haskell" data-trim>
+data Exp
+    = ELit Lit          -- True, 1
+    | EVar Name         -- x
+    | EApp Exp Exp      -- f x
+    | EAbs Name Exp     -- λx. e
+    | ELet Name Exp Exp -- let x = e in e'
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+λf. λx. f x
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+=    λ          f  .  λ          x  .             f          x
+=   EAbs (EVar "f") (EAbs (EVar "x") (EApp (EVar "f") (EVar "x")))
+        </code></pre>
+    </section>
+    <section>
         <h2>Notation</h2>
             $$ \begin{matrix}
             \text{Classical} & \text{Type theory} \\
             \text{it rains} ~\Rightarrow~ \text{road is wet}
             & \frac{\text{it rains}}{\text{road is wet}}
             \end{matrix} $$
+    </section>
+    <section>
+        <h2>Typing literals</h2>
+        $$ \frac{}{\text{True} : \text{Bool}} \quad \frac{}{\text{1} : \text{Int}} \quad \text{(axioms)} $$
     </section>
     <section>
         <h2>Typing variables</h2>
@@ -129,7 +151,7 @@ x = (\f -> (f 2, f "hello")) id
                 \Gamma \vdash {\color{lightgrey}(}x : \sigma{\color{lightgrey})}
             } \quad \text{[Variable]}
         $$
-        »If you have a table, then you can obtain a table.«
+        »If you have a chair, then you can obtain a chair.«
     </section>
     <section>
         <h2>Function application</h2>
@@ -278,7 +300,7 @@ choose p = show (if p then 1 else "hello")
     </section>
     <section>
         <h2>Unification</h2>
-        Goal: find the most general common supertype
+        Goal: find the most general common subtype
         <pre><code class="haskell" data-trim>
 lefty :: Either Int r
 lefty = Left 1
@@ -301,16 +323,31 @@ choose p = if p then lefty else righty
     <section>
         <h2>Unification algorithm</h2>
         $$
-            \text{Either}~a~\text{Int}\rightarrow\text{Int} ~\overset?\approx~ \text{Either}~\text{Char}~(b \rightarrow b)
+            \text{Either}~a~\text{Int}\rightarrow\text{Int} ~\overset?\sim~ \text{Either}~\text{Char}~(b \rightarrow b)
         $$
         <br/>
         <ol>
-            <li>The type constructor itself has to unify<br/>\(\text{Either} \approx \text{Either} ~ \checkmark\)</li>
+            <li class="fragment">The type constructor itself has to unify<br/>\(\text{Either} \sim \text{Either} ~ {\color{green}\checkmark}\)</li>
             <li class="fragment">All arguments must match<br/>
-                \(a \approx \text{Char} \Rightarrow a \overset!= \text{Char} ~ \checkmark\)</br>
-                \(\text{Int} \rightarrow \text{Int} \approx b \rightarrow b \Rightarrow \text{Int} \overset!= b ~ \checkmark\)</br>
+                \(a \sim \text{Char} \Rightarrow a \leadsto \text{Char} ~ {\color{green}\checkmark}\)</br>
+                <span class="fragment">\(\text{Int} \rightarrow \text{Int} \sim b \rightarrow b \Rightarrow \text{Int} \leadsto b ~ {\color{green}\checkmark}\)</span>
             </li>
-            <li class="fragment">Works!</li>
+            <li class="fragment">\({\color{green}\checkmark}\) Unifies as \(\text{Either}~\text{Char}~(\text{Int} \rightarrow \text{Int})\)</li>
+        </ol>
+    </section>
+    <section>
+        <h2>… with substitutions</h2>
+        $$
+            \text{Either}~a~\text{Int} ~\overset?\sim~ \text{Either}~\text{b}~\text{b}
+        $$
+        <br/>
+        <ol>
+            <li class="fragment">The type constructor itself has to unify<br/>\(\text{Either} \sim \text{Either} ~ {\color{green}\checkmark}\)</li>
+            <li class="fragment">All arguments must match<br/>
+                \(a \sim \text{b} \Rightarrow b \leadsto a ~ {\color{green}\checkmark}\)</br>
+                <span class="fragment">\(\text{Int} \sim b, ~\text{but}~ b \leadsto a \Rightarrow a \leadsto \text{Int} {\color{green}\checkmark}\)</span>
+            </li>
+            <li class="fragment">\({\color{green}\checkmark}\) Unifies as \(\text{Either}~\text{Int}~\text{Int}\)</li>
         </ol>
     </section>
 </section>
@@ -336,6 +373,11 @@ fac = let fix f = f (fix f)
     <section>
         <h2>Algorithm W</h2>
         »Find the most general type of an expression«
+    </section>
+
+    <section>
+        <h2><u>Algorithm</u> W</h2>
+        »Construct the most general type of an expression«
     </section>
 
     <section>
@@ -374,16 +416,6 @@ id id 5 :: ???
         </code></pre>
     </section>
 
-    <section>
-        <h2>Function application</h2>
-        $$
-        \frac{
-            \Gamma \vdash f : \tau_f \quad \Gamma \vdash x : \tau_x \quad \tau_\varphi = \text{fresh} \quad \text{unify}(\tau_f,\, \tau_x \rightarrow \tau_\varphi)
-        }{
-            \Gamma \vdash f\;x : \tau_\varphi
-        }
-        $$
-    </section>
 
     <section>
         <h2>Abstraction</h2>
@@ -396,7 +428,40 @@ id id 5 :: ???
         $$
     </section>
 
+    <section>
+        <h2>Function application</h2>
+        $$
+        \frac{
+            \Gamma \vdash f : \tau_f \quad \Gamma \vdash x : \tau_x \quad \color{purple}{\tau_\varphi \leftarrow \text{fresh} \quad \text{unify}(\tau_f,\, \tau_x \rightarrow \tau_\varphi)}
+        }{
+            \Gamma \vdash f\;x : \tau_\varphi
+        }
+        $$
+    </section>
 
+    <section>
+        <h2>… and 3 more rules</h2>
+        $$
+            \frac{}{1 : \text{Int}}
+        $$
+        <hr/>
+        $$
+            \frac {
+                \tau = \text{fresh} \quad \sigma = \forall\emptyset.\tau \quad \Gamma,x:\sigma \vdash e:\tau'
+            }{
+                \Gamma \vdash \lambda x.e:\tau\rightarrow\tau'
+            }
+        $$
+        <hr/>
+        $$
+            \frac {
+                \Gamma \vdash e:\tau \quad \sigma \leftarrow \text{generalize}(\Gamma, \tau) \quad \Gamma, x:\sigma \vdash e':\tau'
+            }{
+                \Gamma \vdash \text{let} x=e \text{in} e':\tau'
+            }
+        $$
+        <hr/>
+    </section>
 </section>
 
 
@@ -425,7 +490,7 @@ id id 5 :: ???
         </ul>
     </section>
     <section>
-        <h2>Runnable, well-documented implementation</h2>
+        <h2>Simple implementation</h2>
         <a href="https://github.com/quchen/articles/tree/master/hindley-milner">github.com/quchen/articles/tree/master/hindley-milner</a><br/>
         Or search for »quchen hindley-milner«
     </section>
@@ -433,12 +498,51 @@ id id 5 :: ???
 
 
 
+<section>
+    <h1>Thanks!</h1>
+</section>
+
+
 
 
 
 <section>
-    <h1>Thanks!</h1>
+    <section>
+        <h2>What’s my type?</h2>
+        <pre><code class="haskell" data-trim>
+f []     = ()
+f (_:xs) = f (zip xs xs)
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+GHC: > Occurs check: cannot construct the infinite type: b1 ~ (b1, b1)
+     > Expected type: [(b1, b1)] -> ()
+     > Actual type: [b1] -> ()
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+f :: [a] -> ()
+f []     = ()
+f (_:xs) = f (zip xs xs)
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+GHC: OK
+        </code></pre>
+    </section>
+    <section>
+        <h2>GHC’s typechecker</h2>
+        <ul>
+            <li>Complicated beast</li>
+            <li>Typecheck before desugaring</li>
+            <li>Touched by many hands</li>
+            <li>Lots of language extensions supported</li>
+            <li>Full with unnecessary IO</li>
+        </ul>
+    </section>
 </section>
+
+
+
+
+
 
 
 

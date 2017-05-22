@@ -19,7 +19,7 @@ body {
   background-color: #fdf6e3; }
 
 .reveal {
-  font-family: "Lato", sans-serif;
+  font-family: "Comic Sans MS", sans-serif;
   font-size: 36px;
   font-weight: normal;
   color: #657b83; }
@@ -45,7 +45,7 @@ body {
 .reveal h6 {
   margin: 0 0 20px 0;
   color: #586e75;
-  font-family: "League Gothic", Impact, sans-serif;
+  font-family: "Comic Sans MS", sans-serif;
   font-weight: normal;
   line-height: 1.2;
   letter-spacing: normal;
@@ -54,16 +54,16 @@ body {
   word-wrap: break-word; }
 
 .reveal h1 {
-  font-size: 3.77em; }
+  font-size: 2.5em; }
 
 .reveal h2 {
-  font-size: 2.11em; }
+  font-size: 2em; }
 
 .reveal h3 {
-  font-size: 1.55em; }
+  font-size: 1.5em; }
 
 .reveal h4 {
-  font-size: 1em; }
+  font-size: 1.33em; }
 
 .reveal h1 {
   text-shadow: none; }
