@@ -32,11 +32,11 @@
 
 <!-- Titel-Slide -->
 <section>
-    <section data-background-color="#74c85b" style="color: #ff0;">
+    <section data-background-color="#b8e3ab" style="color: #ff0;">
         <p>
             μHUG, 2016-05-23
         </p>
-        <h1 style="color: #fd4;">Hindley-Milner<br/>– Generics, but useful</h1>
+        <h1 style="color: #f92;">Hindley-Milner<br/>– Generics, but useful</h1>
         <p>
             <a href="mailto:david.luposchainsky@tngtech.com">David Luposchainsky</a><br/>
             <a href="https://github.com/quchen/">quchen</a> /ˈkuːχn̩/<br/>
@@ -132,11 +132,9 @@ data Exp
     </section>
     <section>
         <h2>Notation</h2>
-            $$ \begin{matrix}
-            \text{Classical} & \text{Type theory} \\
-            \text{it rains} ~\Rightarrow~ \text{road is wet}
-            & \frac{\text{it rains}}{\text{road is wet}}
-            \end{matrix} $$
+        Classical: \( \text{it rains} ~\Rightarrow~ \text{road is wet} \)
+        <hr>
+        Type theory: \( \frac{\text{it rains}}{\text{road is wet}} \)
     </section>
     <section>
         <h2>Typing literals</h2>
@@ -477,7 +475,7 @@ id id 5 :: ???
             </code></pre>
 
             <pre><code class="haskell" data-trim>
-    inference   :: Value -> Either Error Type
+    inference   :: Definitions -> Value -> Either Error Type
             </code></pre>
     </section>
     <section>
@@ -527,14 +525,14 @@ f (_:xs) = f (zip xs xs)
 GHC: OK
         </code></pre>
     </section>
-    <section>
-        <h2>GHC’s typechecker</h2>
+    <section data-background-color="#c3e9bd">
+        <h2><span style="color: #f00;">G</span><span style="color: #0f0;">H<span style="color: #00f;">C</span></span></span>’s typechecker</h2>
         <ul>
             <li>Complicated beast</li>
             <li>Typecheck before desugaring</li>
             <li>Touched by many hands</li>
             <li>Lots of language extensions supported</li>
-            <li>Full with unnecessary IO</li>
+            <li>Full of IO</li>
         </ul>
     </section>
 </section>
