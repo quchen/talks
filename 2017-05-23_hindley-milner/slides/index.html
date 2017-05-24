@@ -1,4 +1,4 @@
-<!doctype html>
+t<!doctype html>
 <html>
     <head>
         <meta charset="utf-8">
@@ -32,7 +32,7 @@
 
 <!-- Titel-Slide -->
 <section>
-    Foobar.
+    <h1>☃</h1>
 </section>
 <section>
     <section data-background-color="#00f" style="color: #0f0;">
@@ -89,6 +89,12 @@ id x = x
     <section>
         <h1>Soundness</h1>
         »Is it safe to run this program, or could it segfault?«
+        <pre><code class="c" data-trim>
+int main() {
+    char *hello = "hello world";
+    printf("%s", *(int*) hello);
+}
+        </code></pre>
     </section>
 
     <section>
@@ -140,11 +146,11 @@ data Exp
         Type theory: \( \frac{\text{it rains}}{\text{road is wet}} \)
     </section>
     <section>
-        <h2>Typing literals</h2>
+        <h2>Literals</h2>
         $$ \frac{}{\text{True} : \text{Bool}} \quad \frac{}{\text{1} : \text{Int}} \quad \text{(axioms)} $$
     </section>
     <section>
-        <h2>Typing variables</h2>
+        <h2>Variables</h2>
         $$
             \frac{
                 {\color{lightgrey}(}x : \sigma{\color{lightgrey})} \in \Gamma
@@ -458,7 +464,7 @@ id id 5 :: ???
             \frac {
                 \Gamma \vdash e:\tau \quad \sigma \leftarrow \text{generalize}(\Gamma, \tau) \quad \Gamma, x:\sigma \vdash e':\tau'
             }{
-                \Gamma \vdash \text{let} x=e \text{in} e':\tau'
+                \Gamma \vdash \text{let} ~x=e~ \text{in}~ e':\tau'
             }
         $$
         <hr/>
@@ -528,7 +534,28 @@ f (_:xs) = f (zip xs xs)
 GHC: OK
         </code></pre>
     </section>
-    <section data-background-color="#c3e9bd">
+    <section>
+        <h2>What’s my type?</h2>
+        <pre><code class="haskell" data-trim>
+f x = (x,x)
+g = f.f
+h = g.g
+i = h.h
+j = i.i
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+f :: ((), ())
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+g :: (((), ()), ((), ()))
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+h :: (((((), ()), ((), ())), (((), ()), ((), ()))),
+      ((((), ()), ((), ())), (((), ()), ((), ()))))
+        </code></pre>
+
+    </section>
+    <section data-background-color="#5ff">
         <h2><span style="color: #f00;">G</span><span style="color: #0f0;">H<span style="color: #00f;">C</span></span></span>’s typechecker</h2>
         <ul>
             <li>Complicated beast</li>
@@ -537,6 +564,10 @@ GHC: OK
             <li>Lots of language extensions supported</li>
             <li>Full of IO</li>
         </ul>
+    </section>
+
+    <section>
+        <h2>Thanks again.</h2>
     </section>
 </section>
 
