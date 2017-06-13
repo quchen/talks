@@ -1,0 +1,311 @@
+t<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Logic</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/solarized.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+
+
+
+
+
+<!-- Titel-Slide -->
+<section>
+    <h1>☃</h1>
+</section>
+<section>
+    <section>
+        <p>
+            Techday, 2016-06-16
+        </p>
+        <h1>Logic</h1>
+        <p>
+            <a href="mailto:david.luposchainsky@tngtech.com">David Luposchainsky</a><br/>
+            <a href="https://github.com/quchen/">quchen</a> /ˈkuːχn̩/<br/>
+            <a href="http://www.tngtech.com">TNG Technology Consulting</a>
+        </p>
+    </section>
+
+    <section>
+        Slides are available online:<br/>
+        <a href="https://github.com/quchen/talks">https://github.com/<strong>quchen</strong>/<strong>talks</strong></a>
+    </section>
+</section>
+
+
+<section>
+    <section>
+        <h2>Everyday life</h2>
+        <p>A: »Are you familiar with logic?«</p>
+        <p>B: »Don’t be a dick«</p>
+        <p><em>Logic is rarely mentioned in a positive context</em></p>
+    </section>
+    <section>
+        <h2>Programmers</h2>
+        <p>A: »Are you familiar with logic?«</p>
+        <p>B: »Sure, I’ve used Booleans«</p>
+    </section>
+    <section>
+        <h2>Logician</h2>
+        <p>A: »Are you familiar with logic?«</p>
+        <p>B: »I read a couple of intros to some of them«</p>
+    </section>
+</section>
+<section>
+    <section>
+        <h2>What?</h2>
+        <p>Logic: making correct deductions.</p>
+        <p>\( \text{it rains} ~\Rightarrow~ \text{the road is wet} \)</p>
+    </section>
+
+    <section>
+        <h2>Joke</h2>
+        <p class="fragment">(hilarity ensues)</p>
+    </section>
+
+    <section>
+        <h2>»a« logic</h2>
+        <ul>
+            <li>A language</li>
+            <li>A set of axioms </li>
+            <li>Axioms are trivially theorems</li>
+            <li>Theorems: words of the language made from combining theorems</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Classical logic</h2>
+        <ul>
+            <li>Language: binary and (\(\wedge\)), binary or (\(\vee\)), boolean values</li>
+            <li>Axioms, e.g. \(A \wedge B \Rightarrow A\)</li>
+            <li>Axioms are trivially theorems</li>
+            <li>Theorem, e.g. \(A \wedge B \Rightarrow B \wedge A\)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Some classical axioms</h2>
+        $$\frac{A \quad B}{A \wedge B} \quad (\wedge I) \qquad \frac{A \wedge B}{B} \quad (\wedge E_R) \qquad \frac{B}{A \vee B} \quad (\vee I_R)\qquad$$
+    </section>
+
+    <section>
+        <h3>Falsehood</h3>
+        $$
+            \frac{A \quad \neg A}{\bot}~(\bot I)
+            \qquad
+            \frac\bot B~(\bot E)
+        $$
+
+        <h3>Truth</h3>
+        $$
+            \frac C\top~(\top I)
+        $$
+    </section>
+
+    <section>
+        <h2>LEM</h2>
+        $$\frac{}{A \vee \neg A}$$
+    </section>
+
+    <section>
+        <h2>LEM-based theorems</h2>
+        <ul>
+            <li class="fragment">p is prime or not: \(\forall p.~\text{prime}(p) \vee \neg \text{prime}(p)\)</li>
+            <li class="fragment">Riemann hypothesis: \(\text{holds} \vee \neg \text{holds}\)</li>
+            <li class="fragment">Continuum hypothesis: \(\text{holds} \vee \neg \text{holds}\)</li>
+            <li class="fragment">Allah: \(\text{exists} \vee \neg \text{exists}\)</li>
+        </ul>
+        <p class="fragment">Classical logic: truth is discovered, not invented</p>
+    </section>
+
+    <section>
+        <h2>Constructive logic</h2>
+        No LEM!
+        <ul>
+            <li class="fragment">p is prime or not: \(\forall p.~\text{prime}(p) \vee \neg \text{prime}(p)\)</li>
+            <li class="fragment">Riemann hypothesis: \(\text{holds} \vee \neg \text{holds}\) – NOPE</li>
+            <li class="fragment">Continuum hypothesis: \(\text{holds} \vee \neg \text{holds}\) – NOPE</li>
+            <li class="fragment">Allah: \(\text{exists} \vee \neg \text{exists}\) – NOPE</li>
+        </ul>
+        <p class="fragment">Constructive logic: truth is invented, not discovered</p>
+        <p class="fragment">Application: type systems, e.g. Java, Haskell</p>
+    </section>
+
+    <section>
+        <h2>Substructural logic</h2>
+        <ul>
+            <li class="fragment"><strong>Linear:</strong> Each proposition must be used <strong>exactly once</strong></li>
+            <li class="fragment"><strong>Affine:</strong> Each proposition must be used <strong>at most once</strong></li>
+            <li class="fragment"><strong>Relevant:</strong> Each proposition must be used <strong>at least once</strong></li>
+        </ul>
+        <p class="fragment">Application: resource management, e.g. Rust</p>
+    </section>
+
+    <section>
+        <h2>Temporal logic</h2>
+        <p>Propositions are only true for some period</p>
+        <ul>
+            <li>I am 29 years old</li>
+            <li>This algorithm never deadlocks</li>
+        </ul>
+        <p class="fragment">Application: database design</p>
+    </section>
+</section>
+<section>
+    <section>
+        <h2>Curry-Howard</h2>
+        <p>All computer programs are proofs</p>
+    </section>
+    <section>
+        <h2>Theorem time!</h2>
+        $$\forall A\,B. A \Rightarrow (B \Rightarrow A)$$
+        <p>Proof:</p>
+        <ul>
+            <li>Lambda calculus: \(\lambda x.\lambda y. x\)</li>
+            <li>Other notation:
+                <pre><code class="javascript" data-trim>
+function(x) {
+    return function(y) {
+        return x; // urk
+    };
+};
+                </code></pre>
+                <pre><code class="javascript" data-trim>
+                    (x) => (y) => x; // ES6
+                </code></pre>
+                <pre><code class="haskell" data-trim>
+                    \x y -> x -- Haskell
+                </code></pre>
+            </li>
+        </ul>
+    </section>
+    <section>
+        <h2>Curry-Howard</h2>
+        <ul>
+            <li class="fragment">Type \(\Leftrightarrow\) Theorem</li>
+            <li class="fragment">Value (of a type) \(\Leftrightarrow\) proof (of a theorem)</li>
+            <li class="fragment">\(\forall A. P(A) ~ \Leftrightarrow\) generic <code>P&lt;A></code></li>
+            <li class="fragment">False proposition \(\Leftrightarrow\) can’t write program with that type</li>
+            <li class="fragment">\(\text{myProp} : \forall A\,B.A \Rightarrow B \quad\Leftrightarrow\quad\) <code>B myFunc(A a)</code></li>
+        </ul>
+    </section>
+    <section>
+        <h2>Demo</h2>
+    </section>
+</section>
+
+<section>
+    <section>
+        <h2>Logician’s work</h2>
+        <p>»What theorems can I express<br>using this logic?«</p>
+        <p>»What programs can I express<br>using this type system?«</p>
+    </section>
+    <section>
+        <p>Type systems: use logic to make bad states unrepresentable</p>
+    </section>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // More info https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                history: true,
+
+                transition: 'slide',
+                transitionSpeed: 'fast',
+                controls: false,
+                progress: false,
+
+            	math: {
+            		mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js',
+            		config: 'TeX-AMS_HTML-full'  // See http://docs.mathjax.org/en/latest/config-files.html
+            	},
+
+                // More info https://github.com/hakimel/reveal.js#dependencies
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/math/math.js', async: true },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ]
+
+
+                	// other options ...
+            });
+        </script>
+    </body>
+</html>
