@@ -119,13 +119,13 @@ t<!doctype html>
 
         <h3>Truth</h3>
         $$
-            \frac C\top~(\top I)
+            \frac \cdot\top~(\top I)
         $$
     </section>
 
     <section>
         <h2>LEM</h2>
-        $$\frac{}{A \vee \neg A}$$
+        $$\frac\cdot{A \vee \neg A}$$
     </section>
 
     <section>
@@ -134,7 +134,7 @@ t<!doctype html>
             <li class="fragment">p is prime or not: \(\forall p.~\text{prime}(p) \vee \neg \text{prime}(p)\)</li>
             <li class="fragment">Riemann hypothesis: \(\text{holds} \vee \neg \text{holds}\)</li>
             <li class="fragment">Continuum hypothesis: \(\text{holds} \vee \neg \text{holds}\)</li>
-            <li class="fragment">Allah: \(\text{exists} \vee \neg \text{exists}\)</li>
+            <li class="fragment">Thor: \(\text{exists} \vee \neg \text{exists}\)</li>
         </ul>
         <p class="fragment">Classical logic: truth is discovered, not invented</p>
     </section>
@@ -146,7 +146,7 @@ t<!doctype html>
             <li class="fragment">p is prime or not: \(\forall p.~\text{prime}(p) \vee \neg \text{prime}(p)\)</li>
             <li class="fragment">Riemann hypothesis: \(\text{holds} \vee \neg \text{holds}\) – NOPE</li>
             <li class="fragment">Continuum hypothesis: \(\text{holds} \vee \neg \text{holds}\) – NOPE</li>
-            <li class="fragment">Allah: \(\text{exists} \vee \neg \text{exists}\) – NOPE</li>
+            <li class="fragment">Thor: \(\text{exists} \vee \neg \text{exists}\) – NOPE</li>
         </ul>
         <p class="fragment">Constructive logic: truth is invented, not discovered</p>
         <p class="fragment">Application: type systems, e.g. Java, Haskell</p>
@@ -179,26 +179,28 @@ t<!doctype html>
     </section>
     <section>
         <h2>Theorem time!</h2>
-        $$\forall A\,B. A \Rightarrow (B \Rightarrow A)$$
-        <p>Proof:</p>
-        <ul>
-            <li>Lambda calculus: \(\lambda x.\lambda y. x\)</li>
-            <li>Other notation:
-                <pre><code class="javascript" data-trim>
+        $${\color{lightgrey}{\forall A\,B.}} A \Rightarrow (B \Rightarrow A)$$
+        <div class="fragment">
+            <p>Proof:</p>
+            <ul>
+                <li>Lambda calculus: \(\lambda x.\lambda y. x\)</li>
+                <li class="fragment">Other notation:
+                    <pre><code class="javascript" data-trim>
 function(x) {
     return function(y) {
-        return x; // urk
+        return x;
     };
 };
-                </code></pre>
-                <pre><code class="javascript" data-trim>
-                    (x) => (y) => x; // ES6
-                </code></pre>
-                <pre><code class="haskell" data-trim>
-                    \x y -> x -- Haskell
-                </code></pre>
-            </li>
-        </ul>
+                    </code></pre>
+                    <pre><code class="javascript" data-trim>
+                        (x) => (y) => x; // ES6
+                    </code></pre>
+                    <pre><code class="haskell" data-trim>
+                        \x y -> x -- Haskell
+                    </code></pre>
+                </li>
+            </ul>
+        </div>
     </section>
     <section>
         <h2>Curry-Howard</h2>
