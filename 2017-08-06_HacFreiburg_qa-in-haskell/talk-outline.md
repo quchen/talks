@@ -1,0 +1,12 @@
+- Explicit export list
+- Wall
+- Haddock
+- Doctest
+- Tasty
+    - QuickCheck
+        - Basic syntax
+        - forAll(Shrink)
+        - proSort . proSort = proSort
+        - proSort xs ++ proSort ys = proSort (xs ++ ys)
+    - SmallCheck
+    - HUnit
