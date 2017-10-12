@@ -1,0 +1,403 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Change in an immutable world</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/solarized.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+
+
+
+
+
+<!-- Titel-Slide -->
+<section>
+    <h1>☃</h1>
+</section>
+<section>
+    <section>
+        <p>
+            Haskell Exchange 2017
+        </p>
+        <h1>Change in an immutable world</h1>
+        <p>
+            <a href="mailto:david.luposchainsky@tngtech.com">David Luposchainsky</a><br/>
+            <a href="https://github.com/quchen/">quchen</a> /ˈkuːχn̩/<br/>
+            <a href="http://www.tngtech.com">TNG Technology Consulting</a>
+        </p>
+    </section>
+
+    <section>
+        Slides are available online:<br/>
+        <a href="https://github.com/quchen/talks">https://github.com/<strong>quchen</strong>/<strong>talks</strong></a>
+    </section>
+</section>
+
+
+<section>
+    <section>
+        <p>Side effects are…</p>
+        <ul>
+            <li>Evil</li>
+            <li>Hard to reason about</li>
+            <li>Unmaintainable</li>
+            <li>Un-functional</li>
+            <li class="fragment"><em>The</em> point running a program</li>
+        </ul>
+    </section>
+    <section>
+        <p>Purely functional programming is…</p>
+        <ul>
+            <li>Un…evil</li>
+            <li>Easy to reason about</li>
+            <li>Maintainable</li>
+            <li>Functional</li>
+            <li class="fragment">Useless without side effects</li>
+        </ul>
+    </section>
+    <section>
+        <p>Can we solve this dilemma?</p>
+        <ul>
+            <li>Still easy to reason about</li>
+            <li>Stay maintainable</li>
+            <li>Stay functional</li>
+            <li>All with side effects</li>
+        </ul>
+    </section>
+    <section>
+        <h2>Idea!</h2>
+        <p>Map to effectful primitives,<br>but maintain functional API</p>
+        <p><strong>Code:</strong> functional</p>
+        <p><strong>Compiler:</strong> dirty work</p>
+    </section>
+    <section>
+        <pre><code class="haskell" data-trim>
+main = do
+    putStrLn "What is your name?"
+    putStr "> "
+    name <- getLine
+    putStrLn ("Hello, " ++ name)
+        </code></pre>
+        <p class="fragment">Problems: ordering, multiplicity</p>
+    </section>
+    <section>
+        <h2>Ordered?</h2>
+        <pre><code class="haskell" data-trim>
+foo = f (g (h (…)))
+        </code></pre>
+        <p>Only for carefully chosen functions!</p>
+    </section>
+    <section>
+        <h2>Idea: pass around a token</h2>
+        <pre><code class="haskell" data-trim>
+newtype State token a = State (token -> (a,token))
+
+--          +-------+
+--          |       | -----> a
+-- s -----> |       | -----> s
+--          +-------+
+        </code></pre>
+        <div class="fragment">
+        <pre><code class="haskell" data-trim>
+runState (State transition) state = transition state
+instance Monad (State s) where
+    transition >>= f = State (\token ->
+        let (x, token') = runState transition token
+            transition' = f x
+        in runState transition' token')
+
+--       +------------------------------+
+--       |  +-------+   a    +-------+  |
+--       |  |       | -----> |       | -----> b
+-- s -----> |       | -----> |       | -----> s
+--       |  +-------+   s    +-------+  |
+--       +------------------------------+
+        </code></pre>
+        </div>
+    </section>
+    <section>
+        <h2>Not very efficient…</h2>
+        <pre><code class="haskell" data-trim>
+instance Monad (State s) where
+    transition >>= f = State (\token ->
+        let (x, token') = runState transition token
+         -- ^ Tuple: heap allocation
+         --  ^ Tuple entry #1: heap allocation
+         --     ^ Tuple entry #2: heap allocation
+            transition' = f x
+         -- ^ Let binding: heap allocation
+        in runState transition' token')
+        </code></pre>
+    </section>
+    <section>
+        <h2>Unboxed tuples</h2>
+        <pre><code class="haskell" data-trim>
+-- Boxed tuple
+(a,b) =  +--------------------+-------+-------+
+         | »I’m a constructor |       |       |
+         | with two fields«   |   *   |   *   |
+         +--------------------+---|---+---|---+
+                                  |       |
+                                  v       v
+                                  a       b
+        </code></pre>
+        <div class="fragment">
+        <pre><code class="haskell" data-trim>
+-- Unboxed »tuple«
+(# a,b #) =  +-------+-------+
+             |   a   |   b   |
+             +-------+-------+
+        </code></pre>
+        <p>Where’s the tuple?</p>
+        </div>
+    </section>
+    <section>
+        <h2>Remove unnecessary stuff</h2>
+        <pre><code class="haskell" data-trim>
+let x = f y in g x -- Let: heap allocation
+==>
+case f y of x -> g x -- Case: stack allocation
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+case f  x of (  a,b  ) -> … -- Tuple allocation
+==>
+case f' x of (# a,b #) -> … -- Unboxed tuple: no tuple allocation
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+instance Monad (State' s) where
+    transition >>= f = State (\token ->
+        case runState transition token of
+          -- ^ Unboxed tuple, no stack allocation!
+            (# x, token' #) -> runState (f x) token')
+            -- ^ Tuple entry #1: heap allocation
+            --    ^ Tuple entry #2: heap allocation
+                                     -- ^ Heap allocation
+        </code></pre>
+    </section>
+    <section>
+        <h2>Remove more unnecessary stuff</h2>
+        <p>We don’t need the token!</p>
+        <pre><code class="haskell" data-trim>
+data Discard s -- Empty data type with phantom parameter
+newtype State' token a = State' (Discard token -> (a, Discard token))
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+-- Pseudocode!
+instance Monad (State' s) where
+    transition >>= f = State' (\token ->
+        case runState transition token of
+          -- ^ No (unboxed) tuple allocation
+            (# x, token' #) -> runState (f x) token')
+            -- ^ Tuple entry #1: NO allocation (because of discard)
+            --    ^ Tuple entry #2: heap allocation
+                                     -- ^ Heap allocation
+        </code></pre>
+    </section>
+    <section>
+        <ol>
+            <li>Pass around token for order/multiplicity</li>
+            <li>Use non-existent token</li>
+            <li>IO: Use special non-existent token :-)</li>
+        </ol>
+    </section>
+    <section>
+        <h2>ST</h2>
+        <pre><code class="haskell" data-trim>
+data Discard# s
+newtype ST s a = ST (Discard# s -> (a, Discard# s))
+instance Monad (ST s) where … -- Control.Monad.ST.Lazy.Imp
+        </code></pre>
+        <h2>IO</h2>
+        <pre><code class="haskell" data-trim>
+data RealWorld
+data Discard# s
+newtype IO a = IO (Discard# RealWorld -> (a, Discard# RealWorld))
+instance Monad IO where … -- ghc/libraries/base/GHC/Base.hs
+-- or:
+type IO a = ST RealWorld a
+        </code></pre>
+    </section>
+    <section>
+        <h2>main = …</h2>
+        <p>How do we start the Discard# chain?</p>
+        <p>…just like we would get a value out of</p>
+        <pre><code class="haskell" data-trim>
+crypt :: Void -> String -> String
+crypt _key secret = secret
+
+whatsTheSecret = crypt ??? "hello"
+        </code></pre>
+        <div class="fragment">
+            <p>By cheating!</p>
+            <pre><code class="haskell" data-trim>
+whatsTheSecret = crypt undefined "hello"
+            </code></pre>
+        </div>
+    </section>
+    <section>
+        <p>Just make up <em>no token</em>!</p>
+        <hr>
+        <ul>
+            <li>main = … -- Runtime »does« it</li>
+            <li>unsafePerformIO = … hey runtime, you’re good at this, no?</li>
+        </ul>
+    </section>
+    <section>
+        <pre><code class="haskell" data-trim>
+unsafeDupablePerformIO :: IO a -> a
+unsafeDupablePerformIO (IO act)
+  = case runRW# act of
+        (# _token, x #) -> x
+        </code></pre>
+    </section>
+    <section>
+        <h2>IO action examples</h2>
+        <pre><code class="haskell" data-trim>
+putChar :: Char -> IO ()
+putChar c = ccall putchar c >> pure ()
+-- ccall putchar: primitive
+        </code></pre>
+        <pre><code class="haskell" data-trim>
+forkIO :: IO () -> IO ThreadId
+forkIO action = IO (\s ->
+    case fork# … s of (# s1, tid #) -> (# s1, ThreadId tid #))
+    … = exception stuff
+-- fork#: primitive
+        </code></pre>
+    </section>
+    <section>
+        <h2>Hierarchy of unsafety</h2>
+        <ol>
+            <li>unsafePerformIO: relatively safe<span class="fragment">™</span></li>
+            <li class="fragment">unsafeDupablePerformIO: relattivelyyy sssaaffe</li>
+            <li class="fragment">i̸n͡l̨ine͞͠͏P̕ę̵r͘͟͏fǫ͞r̶̛̕m̶Ì͞Ó̸</li>
+        </ol>
+    </section>
+    <section>
+        <h2>Conclusion</h2>
+        <ol>
+            <li>Order computations via token</li>
+            <li>Use symbolic token for efficiency</li>
+            <li>RealWorld never exists</li>
+            <li>Delegate all the dirty work to STG primitives</li>
+            <li>Cheating is a valid implementation detail</li>
+        </ol>
+    </section>
+    <section>
+        <h2>»relatively safe«</h2>
+        <pre><code class="haskell" data-trim>
+unsafeCoerce :: a -> b
+unsafeCoerce x
+  = unsafePerformIO (do
+        let ref :: IORef a
+            ref = unsafePerformIO (newIORef undefined)
+        writeIORef ref x
+        readIORef ref)
+        </code></pre>
+    </section>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // More info https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                history: true,
+
+                transition: 'slide',
+                transitionSpeed: 'fast',
+                controls: false,
+                progress: false,
+
+            	math: {
+            		mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js',
+            		config: 'TeX-AMS_HTML-full'  // See http://docs.mathjax.org/en/latest/config-files.html
+            	},
+
+                // More info https://github.com/hakimel/reveal.js#dependencies
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/math/math.js', async: true },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ]
+
+
+                	// other options ...
+            });
+        </script>
+    </body>
+</html>
