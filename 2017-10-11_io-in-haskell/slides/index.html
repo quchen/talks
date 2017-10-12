@@ -112,10 +112,10 @@ foo = f (g (h (…)))
         <pre><code class="haskell" data-trim>
 newtype State token a = State (token -> (a,token))
 
---          +-------+
---          |       | -----> a
--- s -----> |       | -----> s
---          +-------+
+--              +-------+
+--              |       | -----> a
+-- token -----> |       | -----> token
+--              +-------+
         </code></pre>
         <div class="fragment">
         <pre><code class="haskell" data-trim>
@@ -126,12 +126,12 @@ instance Monad (State s) where
             transition' = f x
         in runState transition' token')
 
---       +------------------------------+
---       |  +-------+   a    +-------+  |
---       |  |       | -----> |       | -----> b
--- s -----> |       | -----> |       | -----> s
---       |  +-------+   s    +-------+  |
---       +------------------------------+
+--           +--------------------------------+
+--           |  +-------+    a     +-------+  |
+--           |  |       | -------> |       | -----> b
+-- token -----> |       | -------> |       | -----> token
+--           |  +-------+  token   +-------+  |
+--           +--------------------------------+
         </code></pre>
         </div>
     </section>
