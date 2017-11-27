@@ -1,0 +1,313 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>What the Haskell</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/solarized.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+
+
+
+
+
+<!-- Titel-Slide -->
+<section>
+    <h1>☃</h1>
+</section>
+<section>
+    <section>
+        <h1>What the Haskell</h1>
+        <p>
+            <a href="mailto:david.luposchainsky@tngtech.com">David Luposchainsky</a><br/>
+            <a href="https://github.com/quchen/">quchen</a> /ˈkuːχn̩/<br/>
+            <a href="http://www.tngtech.com">TNG Technology Consulting</a>
+        </p>
+    </section>
+
+    <section>
+        Slides are available online:<br/>
+        <a href="https://github.com/quchen/talks">https://github.com/<strong>quchen</strong>/<strong>talks</strong></a>
+    </section>
+</section>
+
+
+<section>
+    <section>
+        <h1>Lazy IO</h1>
+    </section>
+
+    <section>
+        <h2>Is it safe?</h2>
+        <pre><code class="haskell" data-trim>
+writeIfChanged :: FilePath -> ByteString -> IO ()
+writeIfChanged filename content = do
+    let action = fmap (== content) (readFile filename)
+        handler (SomeException {}) = pure False
+    isEqual <- action `catch` handler
+    unless isEqual (writeFile filename content)
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>Does it time out?</h2>
+        <pre><code class="haskell" data-trim>
+System.Timeout.timeout 3e6 (readFile "foo")
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>Can it throw?</h2>
+        <pre><code class="haskell" data-trim>
+do x <- BS.withFile "foo" ReadMode (\h -> ... BS.hGetContents h ...)
+   print x
+        </code></pre>
+    </section>
+
+    <!-- <h1>e^iπ = -1</h1> -->
+
+</section>
+
+<section>
+    <section>
+        <h1>seq</h1>
+    </section>
+
+    <section>
+        <pre><code class="haskell" data-trim>
+seq x x = ?
+
+x `seq` y `seq` ()   =?=   y `seq` x `seq` ()
+
+seq (error "foo") (error "bar") -- ?
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>Definition of seq</h2>
+        <pre><code class="haskell" data-trim>
+seq ⊥ x = ⊥
+seq y x = x -- if y is not ⊥
+        </code></pre>
+    </section>
+
+    <section>
+        <h2>Application: outsmarting the compiler</h2>
+        <pre><code class="haskell" data-trim>
+foldl _ acc []     = acc
+foldl f acc (x:xs) = foldl f (f acc x) xs
+
+>>> foldl (+) 0 [1..5]
+0 + (1 + (2 + (3 + (4 + 5))))
+-- urgh memory
+        </code></pre>
+
+        <pre class="fragment"><code class="haskell" data-trim>
+foldl' _ acc []     = acc
+foldl' f acc (x:xs) = let z' = f acc x
+                      in z' `seq` foldl f z' xs
+
+>>> foldl' (+) 0 [1..5]
+15
+        </code></pre>
+    </section>
+
+    <section>
+        <code>seq</code> links evaluation of two expressions.
+        <div class="fragment">
+            <code>seq x y</code> = »if you need a useful y, you also have to look at x.«
+        </div>
+    </section>
+
+    <section>
+        <pre><code class="haskell" data-trim>
+seq x x = ?
+
+x `seq` y `seq` ()   =?=   y `seq` x `seq` ()
+
+seq (error "foo") (error "bar") -- ?
+        </code></pre>
+    </section>
+
+    <section>
+        <code>seq</code> does not imply any evaluation order.
+    </section>
+</section>
+
+<section>
+    <section>
+        <h1>η reduction</h1>
+    </section>
+
+    <section>
+            <pre><code class="haskell" data-trim>
+qux f = let y = …expensive…
+        in f x
+            </code></pre>
+            <pre><code class="haskell" data-trim>
+qux = let y = …expensive…
+      in \f -> f y
+            </code></pre>
+    </section>
+</section>
+
+<section>
+    <section>
+        <h1>Reversed instance definitions</h1>
+        <p>I have <code>Ord</code>, I’m lazy, I want <code>Eq</code></p>
+    </section>
+
+    <section>
+        <pre><code class="haskell" data-trim>
+newtype Nat = Z | S Nat
+        </code></pre>
+
+        <pre><code class="haskell" data-trim>
+instance Ord Nat where
+    compare (S x) (S y) = compare x y
+    compare (S _)  Z    = GT
+    compare  Z     Z    = EQ
+    compare  Z    (S _) = LT
+        </code></pre>
+
+
+        <pre class="fragment"><code class="haskell" data-trim>
+instance Eq Nat where
+    a == b = compare a b == EQ
+        </code></pre>
+
+    </section>
+
+    <section>
+        <pre><code class="haskell" data-trim>
+import Control.Applicative
+import Control.Monad
+
+newtype Id a = Id a
+
+instance Functor Id where
+    fmap = liftA -- Functor defined using Applicative
+
+instance Applicative Id where
+    pure = Id
+    (<*>) = ap -- Applicative defined using Monad
+
+instance Monad Id where
+    return = pure -- Monad defined using Applicative
+    Id x >>= f = f x
+        </code></pre>
+    </section>
+</section>
+
+<section>
+    <section>
+        <h1>e<sup>iπ</sup> = -1</h1>
+    </section>
+    <section>
+        <pre><code class="haskell" data-trim>
+fmap fix return :: ?
+        </code></pre>
+    </section>
+    <section>
+        <pre><code class="haskell" data-trim>
+fmap fix return == ?
+        </code></pre>
+    </section>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // More info https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                history: true,
+
+                transition: 'slide',
+                transitionSpeed: 'fast',
+                controls: false,
+                progress: false,
+
+            	math: {
+            		mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js',
+            		config: 'TeX-AMS_HTML-full'  // See http://docs.mathjax.org/en/latest/config-files.html
+            	},
+
+                // More info https://github.com/hakimel/reveal.js#dependencies
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/math/math.js', async: true },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ]
+
+
+                	// other options ...
+            });
+        </script>
+    </body>
+</html>
