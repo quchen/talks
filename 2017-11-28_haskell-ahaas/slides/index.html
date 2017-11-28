@@ -60,10 +60,17 @@
         <h2>Is it safe?</h2>
         <pre><code class="haskell" data-trim>
 writeIfChanged :: FilePath -> ByteString -> IO ()
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
 writeIfChanged filename content = do
-    let action = fmap (== content) (readFile filename)
+    isEqual <- fmap (== content) (readFile filename)
+    unless isEqual (writeFile filename content)
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+writeIfChanged filename content = do
+    let isEqualIO = fmap (== content) (readFile filename)
         handler (SomeException {}) = pure False
-    isEqual <- action `catch` handler
+    isEqual <- isEqualIO `catch` handler
     unless isEqual (writeFile filename content)
         </code></pre>
     </section>
@@ -94,11 +101,15 @@ do x <- BS.withFile "foo" ReadMode (\h -> ... BS.hGetContents h ...)
 
     <section>
         <pre><code class="haskell" data-trim>
-seq x x = ?
-
-x `seq` y `seq` ()   =?=   y `seq` x `seq` ()
-
-seq (error "foo") (error "bar") -- ?
+seq x x
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+x  `seq` (y `seq` ())
+(x `seq` y) `seq` ()
+y  `seq` (x `seq` ())
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+seq (error "foo") (error "bar")
         </code></pre>
     </section>
 
@@ -132,19 +143,24 @@ foldl' f acc (x:xs) = let z' = f acc x
     </section>
 
     <section>
-        <code>seq</code> links evaluation of two expressions.
+        <p><code>seq</code> links evaluation of two expressions.</p>
         <div class="fragment">
-            <code>seq x y</code> = »if you need a useful y, you also have to look at x.«
+            <pre><code class="haskell" data-trim>seq x y</code></pre>
+            <p>»if you need a useful y, you also have to look at x.«</p>
         </div>
     </section>
 
     <section>
         <pre><code class="haskell" data-trim>
-seq x x = ?
-
-x `seq` y `seq` ()   =?=   y `seq` x `seq` ()
-
-seq (error "foo") (error "bar") -- ?
+seq x x
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+x  `seq` (y `seq` ())
+(x `seq` y) `seq` ()
+y  `seq` (x `seq` ())
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+seq (error "foo") (error "bar")
         </code></pre>
     </section>
 
@@ -155,17 +171,34 @@ seq (error "foo") (error "bar") -- ?
 
 <section>
     <section>
-        <h1>η reduction</h1>
+        <h1>Functions vs. lambdas</h1>
     </section>
 
     <section>
             <pre><code class="haskell" data-trim>
-qux f = let y = …expensive…
+qux :: (A -> b) -> b
+qux f = f x
+  where
+    x = …expensive… :: A
+            </code></pre>
+            <pre><code class="haskell" data-trim>
+qux :: (A -> b) -> b
+qux = \f -> f x
+  where
+    x = …expensive… :: A
+            </code></pre>
+    </section>
+
+    <section>
+            <pre><code class="haskell" data-trim>
+qux :: (A -> b) -> b
+qux f = let x = …expensive… :: A
         in f x
             </code></pre>
             <pre><code class="haskell" data-trim>
-qux = let y = …expensive…
-      in \f -> f y
+qux :: (A -> b) -> b
+qux = let x = …expensive… :: A
+      in \f -> f x
             </code></pre>
     </section>
 </section>
@@ -178,20 +211,19 @@ qux = let y = …expensive…
 
     <section>
         <pre><code class="haskell" data-trim>
-newtype Nat = Z | S Nat
+data List a = Nil | Cons a (List a)
         </code></pre>
 
         <pre><code class="haskell" data-trim>
-instance Ord Nat where
-    compare (S x) (S y) = compare x y
-    compare (S _)  Z    = GT
-    compare  Z     Z    = EQ
-    compare  Z    (S _) = LT
+instance Ord a => Ord (List a) where
+    compare Nil         Nil         = EQ
+    compare Nil         Cons{}      = LT
+    compare Cons{}      Nil         = GT
+    compare (Cons x xs) (Cons y ys) = compare x y <> compare x xs
         </code></pre>
 
-
         <pre class="fragment"><code class="haskell" data-trim>
-instance Eq Nat where
+instance Ord a => Eq (List a) where
     a == b = compare a b == EQ
         </code></pre>
 
@@ -226,16 +258,116 @@ instance Monad Id where
         <pre><code class="haskell" data-trim>
 fmap fix return :: ?
         </code></pre>
+        <pre><code class="haskell" data-trim>
+fix    :: (a -> a) -> a
+fmap   :: Functor f => (a -> b) -> f a -> f b
+return :: Monad m => a -> m a
+        </code></pre>
     </section>
     <section>
         <pre><code class="haskell" data-trim>
 fmap fix return == ?
         </code></pre>
+        <pre><code class="haskell" data-trim>
+fix f  = f (fix f)
+fmap   = (.)
+return = const
+        </code></pre>
     </section>
 </section>
 
+<section>
+    <section>
+        <h1>$ has special powers</h1>
+    </section>
+    <section>
+        <pre><code class="haskell" data-trim>
+($) :: (a -> b) -> a -> b
+f $ x = f x
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+-- fun fact
+($) = id
+        </code></pre>
+    </section>
+    <section>
+        <pre><code class="haskell" data-trim>
+runST (return ())     -- OK
+runST $ return ()     -- OK
+($) runST (return ()) -- Type error. Wat
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+($) :: (a -> b) -> a -> b
+runST :: (forall s. ST s c) -> c
+        </code></pre>
+        <pre class="fragment"><code class="haskell" data-trim>
+($) runST :: ((forall s. ST s c) -> c) -> (forall s. ST s c) -> c
+               ----------------            ----------------
+                          ^-- Do these unify? --^
+        </code></pre>
+    </section>
+</section>
 
+<section>
+    <section>
+        <h1>The simplest monad</h1>
+        <ul>
+            <li class="fragment">List?</li>
+            <li class="fragment">Maybe?</li>
+            <li class="fragment">Identity?</li>
+        </ul>
+        <pre class="fragment"><code class="haskell" data-trim>
+data Proxy a = Proxy
 
+instance Functor Proxy where
+    fmap _ _ = Proxy
+instance Applicative Proxy where
+    pure _ = Proxy
+    _ <*> _ = Proxy
+instance Monad Proxy where
+    _ >>= _ = Proxy
+        </code></pre>
+    </section>
+</section>
+
+<section>
+    <section>
+        <h1>Classes and instances</h1>
+    </section>
+    <section>
+
+        <h2>Shortcut</h2>
+        <pre><code class="haskell" data-trim>
+data Either l r = Left l | Right r
+
+instance Functor (Either l) where
+    fmap :: (a -> b) -> Either e a -> Either e b
+
+    fmap f (Right r) = Right (f r)
+
+    fmap _   (Left l) = Left l -- works
+    fmap _ l@(Left _) = l      -- does not
+        </code></pre>
+    </section>
+    <section>
+        <h2>Left Either Functor</h2>
+        <pre><code class="haskell" data-trim>
+-- Given
+data Either l r = Left l | Right r
+-- write a Functor instance that »maps over« the Left value
+fmap f (Left l) = Left (f l)
+fmap _ (Right r) = Right r
+        </code></pre>
+    </section>
+</section>
+
+<section>
+    <p>That’s it folks, those were all the quirks.</p>
+    <pre class="fragment"><code class="haskell" data-trim>
+>>> 10 `subtract` 2
+-8
+    </code></pre>
+</section>
 
 
 
