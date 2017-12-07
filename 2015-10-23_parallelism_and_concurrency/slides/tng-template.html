@@ -1,0 +1,92 @@
+<!doctype html>
+<html$if(lang)$ lang="$lang$"$endif$>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="generator" content="pandoc">
+$for(author-meta)$
+    <meta name="author" content="$author-meta$" />
+$endfor$
+$if(date-meta)$
+    <meta name="dcterms.date" content="$date-meta$" />
+$endif$
+    <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+
+    <meta name="description" content="Der Inhalt des Vortrags"><!-- FIXME -->
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/theme/tng.css" id="theme">
+    <link rel="stylesheet" href="css/custom.css">
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/$hlss$.css">
+
+    <script data-main="js/main" src="js/vendor/require.js"></script>
+
+    <!-- If the query includes 'print-pdf', include the PDF print sheet -->
+    <script>
+        if( window.location.search.match( /print-pdf/gi ) ) {
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = 'css/print/pdf.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        }
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+</head>
+
+<!--
+  Was machen die extra CSS Klassen?
+  charred: charred-trail Plugin aktivieren,
+  auto-fragment: alle <li> innerhalb von <ul> und <ol> in Fragments umwandeln, d.h. bei Tastendruck erst einblenden
+-->
+<body class="charred">
+
+<div class="i18n">
+    <!-- FIXME: hier wenn gewünscht die Überschrift der Abschnitts-Übersichtseite ändern -->
+    <span class="section-overview">Übersicht</span>
+</div>
+
+$for(include-before)$
+$include-before$
+$endfor$
+
+$if(title)$
+<section>
+  <h1>$title$</h1>
+$if(subtitle)$
+  <h3>$subtitle$</h3>
+$endif$
+  <p style="padding-top:15%">
+$for(author)$
+    <a href="">$author$</a>
+$endfor$
+    <br>
+    $date$
+  </p>
+  <a href="http://www.tngtech.com"><img class="logo" src="img/tng.svg"></a>
+</section>
+$endif$
+
+$if(toc)$
+<section id="$idprefix$TOC">
+$toc$
+</section>
+$endif$
+
+$body$
+
+$for(include-after)$
+$include-after$
+$endfor$
+
+</body>
+</html>

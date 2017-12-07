@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+ghc -O ThreadRing.hs -threaded -Wall -o Main -fforce-recomp \
+    && /usr/bin/time -f "Time taken: %e s" ./Main -N4

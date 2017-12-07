@@ -1,0 +1,407 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="generator" content="pandoc">
+    <meta name="author" content="David Luposchainsky" />
+    <meta name="dcterms.date" content="2015-10-23" />
+    <title>Parallelism and concurrency in Haskell</title>
+
+    <meta name="description" content="Der Inhalt des Vortrags"><!-- FIXME -->
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/theme/tng.css" id="theme">
+    <link rel="stylesheet" href="css/custom.css">
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/github.css">
+
+    <script data-main="js/main" src="js/vendor/require.js"></script>
+
+    <!-- If the query includes 'print-pdf', include the PDF print sheet -->
+    <script>
+        if( window.location.search.match( /print-pdf/gi ) ) {
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = 'css/print/pdf.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        }
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+</head>
+
+<!--
+  Was machen die extra CSS Klassen?
+  charred: charred-trail Plugin aktivieren,
+  auto-fragment: alle <li> innerhalb von <ul> und <ol> in Fragments umwandeln, d.h. bei Tastendruck erst einblenden
+-->
+<body class="charred">
+
+<div class="i18n">
+    <!-- FIXME: hier wenn gewünscht die Überschrift der Abschnitts-Übersichtseite ändern -->
+    <span class="section-overview">Übersicht</span>
+</div>
+
+
+<section>
+  <h1>Parallelism and concurrency in Haskell</h1>
+  <p style="padding-top:15%">
+    <a href="">David Luposchainsky</a>
+    <br>
+    2015-10-23
+  </p>
+  <a href="http://www.tngtech.com"><img class="logo" src="img/tng.svg"></a>
+</section>
+
+
+<section><section id="introduction" class="titleslide slide level1"><h1>Introduction</h1></section><section id="concurrency-vs.-parallelism" class="slide level2">
+<h2>Concurrency vs. parallelism</h2>
+<h3 id="parallelism">Parallelism</h3>
+<ul>
+<li>Goal: speedup</li>
+<li>Orthogonal to correctness</li>
+<li>Comparatively simple</li>
+</ul>
+<h3 id="concurrency">Concurrency</h3>
+<ul>
+<li>Affects logical structure of a program</li>
+<li>Heavily interleaved with correctness</li>
+<li>Often very complicated</li>
+</ul>
+</section><section id="talk-outline" class="slide level2">
+<h2>Talk outline</h2>
+<ol type="1">
+<li><p><strong>Parallelism</strong></p>
+<p>Excellent case for laziness</p></li>
+<li><p><strong>Concurrency with forks and mutable state</strong></p>
+<p>Nice abstractions, language agnostic</p></li>
+<li><p><strong>Transactional memory</strong></p>
+<p>Unique to Haskell, envied by everyone else</p></li>
+</ol>
+</section></section>
+<section><section id="parallelism-1" class="titleslide slide level1"><h1>Parallelism</h1></section><section id="section" class="slide level2">
+<h2></h2>
+<p>&quot;Go faster&quot;</p>
+</section><section id="checking-primes" class="slide level2">
+<h2>Checking primes</h2>
+<p>Problem: find primes in a list (e.g. for crypto)</p>
+<pre class="haskell"><code>isPrime :: Natural -&gt; Bool
+
+filterPrime :: [Natural] -&gt; [Natural]
+filterPrime = filter isPrime
+
+primesBetween lo hi = filterPrime [lo..hi]</code></pre>
+<div class="fragment">
+<p>Unfortunately, this won't parallelize well.</p>
+</div>
+</section><section class="slide level2">
+
+<p><code>map</code> is simple enough to parallelize (why?). Can we use that fact?</p>
+<div class="fragment">
+<pre class="haskell"><code>isPrime :: Natural -&gt; Bool
+
+filterPrime :: [Natural] -&gt; [Natural]
+filterPrime = map snd . filter fst . map (\n -&gt; (isPrime n, n))
+           -- `isPrime` isolated in `map` argument
+           -- (using the decorate-operation-undecorate idiom)
+
+primesBetween lo hi = filterPrime [lo..hi]</code></pre>
+</div>
+</section><section id="whats-in-the-list" class="slide level2">
+<h2>What's in the list?</h2>
+<pre class="haskell"><code>map (\n -&gt; (isPrime n, n))
+    (take 1e5 [1e10..])</code></pre>
+<div class="fragment">
+<p>Thunks! Literally function applications of the lambda.</p>
+<pre class="haskell"><code>map (\n -&gt; (isPrime n, n)) [1,2,3]  =  [ (\n -&gt; (isPrime n, n)) 1
+                                       , (\n -&gt; (isPrime n, n)) 2
+                                       , (\n -&gt; (isPrime n, n)) 3 ]</code></pre>
+</div>
+</section><section id="forcing" class="slide level2">
+<h2>Forcing</h2>
+<ul>
+<li>= Evaluation to a certain degree (e.g. <em>WHNF</em>)</li>
+<li>Primitive task that allows parallelism</li>
+<li>&quot;I'll probably need this, so maybe evaluate it&quot;</li>
+</ul>
+</section><section id="evaluation-strategies" class="slide level2">
+<h2>Evaluation strategies</h2>
+<pre class="haskell"><code>-- Control.Parallel.Strategies
+
+-- A way to evaluate &#39;a&#39;s
+type Strategy a = a -&gt; Eval a
+withStrategy :: Strategy a -&gt; a -&gt; a
+
+-- Primitives
+r0   :: Strategy a -- &quot;NOOP&quot;
+rseq :: Strategy a -- Sequential forcing
+rpar :: Strategy a -- Parallel forcing
+
+-- Combining functions
+evalList        :: Strategy a -&gt; Strategy [a]
+evalTraversable :: Traversable t =&gt; Strategy a -&gt; Strategy (t a)
+evalTuple2      :: Strategy a -&gt; Strategy b -&gt; Strategy (a,b)</code></pre>
+</section><section id="back-to-primes" class="slide level2">
+<h2>Back to primes</h2>
+<pre class="haskell"><code>filterPrime =
+    map snd . filter fst . map (\n -&gt; (isPrime n, n))
+    --                     ^^^
+    -- List of thunks we&#39;d like to force in parallel</code></pre>
+<div class="fragment">
+<pre class="haskell"><code>filterPrimeParallel =
+    map snd . filter fst . parallelize . map (\n -&gt; (isPrime n, n))
+  where
+    parallelize :: [(a, b)] -&gt; [(a, b)]
+    parallelize = withStrategy tupleFstList
+
+    tupleFstList :: Strategy [(a, b)]
+    tupleFstList = parList parFst
+
+    parFst :: Strategy (a,b)
+    parFst = parTuple2 rseq r0</code></pre>
+</div>
+<div class="fragment">
+<pre class="haskell"><code>filterPrimeParallel =
+    map snd . filter fst . parallelize . map (\n -&gt; (isPrime n, n))
+  where
+    parallelize = withStrategy (parList (parTuple2 rseq r0))</code></pre>
+</div>
+</section><section id="demo" class="slide level2">
+<h2>Demo</h2>
+<pre><code>λ. ./run
+[1 of 1] Compiling Main ( Primes.hs, Primes.o )
+Linking Primes ...
+Running sequentially
+45.38 s
+Running in parallel
+16.37 s</code></pre>
+</section><section id="recap" class="slide level2">
+<h2>Recap</h2>
+<p><code>Control.Parallel</code> for easy parallelism:</p>
+<ol type="1">
+<li>Define strategy according to your needs</li>
+<li>Apply strategy, done</li>
+</ol>
+</section><section id="threads-are-cheap" class="slide level2">
+<h2>Threads are cheap</h2>
+<ul>
+<li>Couple of hundred (heap) bytes per thread</li>
+<li>Literally millions are possible</li>
+<li>Don't be afraid of using them!</li>
+</ul>
+<pre><code>λ. ./run
+Creating thread ring of size 3000000
+Passing token 3000000 times
+1
+Time taken: 11.46 s</code></pre>
+</section><section id="other-parallelism-libraries" class="slide level2">
+<h2>Other parallelism libraries</h2>
+<ul>
+<li><strong>monad-par</strong>: Explicit dataflow networks for complicated (pure) computations</li>
+<li><strong>speculation</strong>: the one-liner to solve all pure speculative parallelism needs</li>
+</ul>
+</section></section>
+<section><section id="concurrency-1" class="titleslide slide level1"><h1>Concurrency</h1></section><section id="basic-primitives" class="slide level2">
+<h2>Basic primitives</h2>
+<pre class="haskell"><code>forkIO :: IO () -&gt; IO ThreadId
+
+-- Inter-thread communication
+data MVar a
+newMVar  :: a -&gt; IO (MVar a)
+takeMVar :: MVar a -&gt; IO a
+putMVar  :: a -&gt; MVar a -&gt; IO ()</code></pre>
+</section><section id="mvar" class="slide level2">
+<h2>MVar</h2>
+<ul>
+<li>&quot;Mutable variable&quot;</li>
+<li>&quot;Lock with data attached to it&quot;</li>
+<li>Fully lazy, fully polymorphic</li>
+<li>Either full or empty</li>
+<li>Potentially blocking
+<ul>
+<li>write to full MVar</li>
+<li>reading from empty MVar</li>
+</ul></li>
+</ul>
+</section><section id="example-network-service" class="slide level2">
+<h2>Example: network service</h2>
+<pre class="haskell"><code>main :: IO ()
+main = do
+    numClients &lt;- newMVar 0
+    forever (do
+        connection &lt;- listenOn (Port 8080)
+        forkIO (handleClient numClients connection) )
+
+modifyMVar :: (a -&gt; a) -&gt; MVar a -&gt; IO ()
+modifyMVar f mVar = do
+    v &lt;- takeMVar mVar
+    putMVar mVar $! f v
+
+handleClient :: MVar Integer -&gt; Handle -&gt; IO ()
+handleClient numClients connection =
+    modifyMVar numClients (+1)
+    getHttpMethod connection &gt;&gt;= \case
+        Head -&gt; respond connection &quot;I&#39;m not RFC compliant weee\r\n\r\n&quot;
+        Get -&gt; ...
+        Delete -&gt; ...
+        ...
+    modifyMVar numClients (subtract 1)
+    close connection</code></pre>
+</section><section id="higher-abstractions" class="slide level2">
+<h2>Higher abstractions</h2>
+<ul>
+<li>Channels: queues built with <code>MVar</code>s</li>
+<li>Semaphores: more flexible locking</li>
+<li>Concurrent data structures</li>
+</ul>
+</section><section id="shortcomings-of-forkio" class="slide level2">
+<h2>Shortcomings of forkIO</h2>
+<ul>
+<li>Silent exceptions</li>
+<li>Returning values from forks is awkward</li>
+<li>Locks are hard to use, no atomicity guarantees</li>
+</ul>
+</section></section>
+<section><section id="stm" class="titleslide slide level1"><h1>STM</h1></section><section id="transactional-memory" class="slide level2">
+<h2>Transactional memory</h2>
+<pre class="haskell"><code>modifyMVar :: (a -&gt; a) -&gt; MVar a -&gt; IO ()
+modifyMVar f mVar = do
+    value &lt;- takeMVar mVar
+    putMVar mVar (f value)</code></pre>
+<p>What happens when another thread acesses the <code>MVar</code> between the take and put?</p>
+</section><section id="mvar-api" class="slide level2">
+<h2>MVar API</h2>
+<pre class="haskell"><code>data IO a -- abstract
+instance Monad IO where ...
+
+data MVar a -- abstract
+newMVar :: a -&gt; IO (MVar a)
+takeMVar :: MVar a -&gt; IO a
+putMVar :: MVar a -&gt; a -&gt; IO ()
+modifyMVar :: (a -&gt; a) -&gt; MVar a -&gt; IO () -- Dangerous
+
+block :: IO a -- doesn&#39;t exist, but might be handy sometimes
+whenBlockedThen :: IO a -&gt; IO a -&gt; IO a -- dito
+
+throw :: Exception e =&gt; e -&gt; IO a
+catch :: Exception e =&gt; IO a -&gt; (e -&gt; IO a) -&gt; IO a</code></pre>
+</section><section id="tvar-api" class="slide level2">
+<h2>TVar API</h2>
+<pre class="haskell"><code>data STM a -- abstract
+instance Monad STM where ...
+
+data TVar a -- abstract
+newTVar :: a -&gt; STM (TVar a)
+takeTVar :: TVar a -&gt; STM a
+putTVar :: TVar a -&gt; a -&gt; STM ()
+modifyTVar :: (a -&gt; a) -&gt; TVar a -&gt; STM ()
+
+retry :: STM a
+orElse :: STM a -&gt; STM a -&gt; STM a
+
+throwSTM :: Exception e =&gt; e -&gt; STM a
+catchSTM :: Exception e =&gt; STM a -&gt; (e -&gt; STM a) -&gt; STM a
+
+atomically :: STM a -&gt; IO a</code></pre>
+<div class="fragment">
+<pre class="haskell"><code>modifyTVar :: (a -&gt; a) -&gt; TVar a -&gt; STM ()
+modifyTVar f tVar = do
+    value &lt;- readTVar tVar
+    writeTVar tVar (f value)</code></pre>
+</div>
+</section><section id="how-does-it-work" class="slide level2">
+<h2>How does it work?</h2>
+<ul>
+<li>STM actions write to a log of changes</li>
+<li><code>atomically</code> attempts to commit then log</li>
+<li>Changed circumstances lead to <code>retry</code>ing the action</li>
+<li>Repeat until successful</li>
+</ul>
+</section><section id="should-i-use-stm" class="slide level2">
+<h2>Should I use STM?</h2>
+<h3 id="pros">Pros</h3>
+<ul>
+<li>No deadlocks by design</li>
+<li>Guaranteed atomicity</li>
+</ul>
+<h3 id="cons">Cons</h3>
+<ul>
+<li>Livelocks still possible</li>
+<li>Stampending herd</li>
+<li>No fairness guarantees</li>
+<li>Long transactions undesirable</li>
+</ul>
+</section></section>
+<section><section id="speculative-parallelism" class="titleslide slide level1"><h1>Speculative parallelism</h1></section><section id="section-1" class="slide level2">
+<h2></h2>
+<p>&quot;I think this is the answer</p>
+<p>so I'll continue with that assumption</p>
+<p>and verify it in parallel&quot;</p>
+</section><section id="is-a-one-liner" class="slide level2">
+<h2>... is a one-liner</h2>
+<pre class="haskell"><code>spec :: Eq a =&gt; a -&gt; (a -&gt; b) -&gt; a -&gt; b
+spec g f a = let s = f g in s `par` if g == a then s else f a in spec</code></pre>
+<div class="fragment">
+<ul>
+<li><code>par</code> is an old version of <code>rpar</code> from <code>Control.Parallel</code></li>
+<li>Implemented by Edward Kmett</li>
+<li>... after reading a 12-page paper attempting the same in C#</li>
+<li>... written as a no-brainer one-liner in a Reddit comment</li>
+</ul>
+</div>
+</section><section class="slide level2">
+
+<p>Add two minor modifications,</p>
+<ul>
+<li>Parametrize over the equality function</li>
+<li>No speculation with only one thread</li>
+</ul>
+<pre class="haskell"><code>-- Copied verbatim from the `speculation` package
+
+specBy :: (a -&gt; a -&gt; Bool) -&gt; a -&gt; (a -&gt; b) -&gt; a -&gt; b
+specBy cmp guess f a
+  | numCapabilities == 1 = f $! a
+  | otherwise = speculation `par`
+      if cmp guess a
+          then speculation
+          else f a
+  where speculation = f guess
+
+spec :: Eq a =&gt; a -&gt; (a -&gt; b) -&gt; a -&gt; b
+spec = specBy (==)</code></pre>
+</section><section id="how-does-it-work-1" class="slide level2">
+<h2>How does it work?</h2>
+<ul>
+<li>Threads are heap objects</li>
+<li>Heap objects are tracked by the GC</li>
+<li>Obsolete threads are simply GC'd</li>
+<li>Fork as long as you have memory and CPU free</li>
+</ul>
+</section><section class="slide level2">
+
+<h3 id="things-not-covered">Things not covered</h3>
+<ul>
+<li>Exceptions</li>
+<li>Debugging</li>
+<li><code>async</code> library</li>
+<li>FFI integration</li>
+<li>Distributed processes</li>
+<li>Data parallel computations</li>
+<li>GPGPU</li>
+<li>Other semiautomatic parallelization libs</li>
+</ul>
+</section></section>
+<section><section id="questions" class="titleslide slide level1"><h1>Questions?</h1></section></section>
+
+
+</body>
+</html>
