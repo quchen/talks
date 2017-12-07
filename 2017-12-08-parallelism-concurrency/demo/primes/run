@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+TIMEFORMAT="%e s"
+CAPABILITIES=4
+TIME="/usr/bin/time"
+
+stack ghc -- -O Main.hs -threaded -fforce-recomp \
+    && $TIME -f "$TIMEFORMAT" ./Main seq +RTS -N$CAPABILITIES \
+    && $TIME -f "$TIMEFORMAT" ./Main par +RTS -N$CAPABILITIES
