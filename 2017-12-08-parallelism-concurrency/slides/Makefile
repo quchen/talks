@@ -7,7 +7,4 @@ pdf:
 		--latex-engine=xelatex \
 		--variable fontsize=9pt \
 		parallel-concurrent.pandoc \
-		-o out.pdf
-
-clean:
-	rm reveal.js/index.html out.pdf
+		-o slides.pdf

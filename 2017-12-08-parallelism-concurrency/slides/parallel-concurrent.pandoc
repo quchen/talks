@@ -16,6 +16,10 @@ date: 2017-12-07
 - Orthogonal to correctness
 - Comparatively simple
 
+
+. . .
+
+
 ### Concurrency
 
 - Affects logical structure of a program
@@ -174,7 +178,7 @@ filterPrimeParallel =
 ```
 λ. ./run
 [1 of 1] Compiling Main ( Primes.hs, Primes.o )
-Linking Primes ...
+Linking Primes …
 Running sequentially
 45.38 s
 Running in parallel
@@ -195,19 +199,21 @@ Running in parallel
 - Don't be afraid of using them!
 
 ```
->>> time ./Main.hs 1000000
-Forking 1000000 threads
+>>> time ./Main.hs 1234567
+Forking 1234567 threads
 Start the counting cascade
-Counter: 1000000
-./Main.hs 1000000  4,57s user 0,50s system 100% cpu 5,032 total
+Counter: 1234567
+./Main.hs 1234567  5,38s user 0,66s system 100% cpu 6,001 total
 ```
 
 
 
 ## Other parallelism libraries
 
-- **monad-par**: Explicit dataflow networks for complicated (pure) computations
+- **monad-par**: Explicit dataflow networks for complicated (pure or effectful)
+  computations
 - **speculation**: the one-liner to solve all pure speculative parallelism needs
+- **Haxl**: See Simon Marlow’s BTD 10 talk
 
 
 
@@ -235,35 +241,61 @@ wait :: Async a -> IO a
 ```
 . . .
 ```haskell
--- Inter-thread communication
+-- Locking
 data MVar a
 newMVar  :: a -> IO (MVar a)
 takeMVar :: MVar a -> IO a
 putMVar  :: a -> MVar a -> IO ()
 ```
 
-## Example: network service
+## Example: webserver
 
 ```haskell
 main :: IO ()
 main = do
     numClients <- newMVar 0
-    forever (do
-        connection <- listenOn (Port 8080)
-        forkFinally (\_ -> close connection)
-                    (handleClient numClients connection) )
+    forever (acceptClient numClients)
+
+acceptClient :: MVar Int -> IO ()
+acceptClient numClients = do
+    connection <- listenOn (Port 8080)
+    forkFinally (\_ -> close connection)
+                (handleClient numClients connection)
 ```
 . . .
 ```haskell
-handleClient :: MVar Integer -> Handle -> IO ()
+handleClient :: MVar Int -> Handle -> IO ()
 handleClient numClients connection = do
     modifyMVar numClients (+1)
     getHttpMethod connection >>= \case
-        Head -> …
-        Get -> …
+        Head   -> …
+        Get    -> …
         Delete -> …
         …
     modifyMVar numClients (subtract 1)
+```
+
+## Example: service chaining
+
+```haskell
+main = do
+    let customerId = 123
+    addressA <- async (queryAddress customerId)
+    inventoryA <- async (queryInventory customerId)
+```
+. . .
+```haskell
+    address <- wait addressA
+    capabilitiesA <- async (queryCapabilities customerId address)
+```
+. . .
+```haskell
+    capabilities <- wait capabilities
+
+    -- more stuff here
+
+    inventory <- wait inventoryA
+    doStuff address inventory address
 ```
 
 ## Higher abstractions
@@ -289,31 +321,25 @@ modifyMVar f mVar = do
 
 What happens when another thread fills the `MVar` between the take and put?
 
-## MVar API
+## Standard API
 
 ```haskell
 data IO a
-instance Monad IO where ...
+instance Monad IO where …
 
 data MVar a
 newMVar    :: a -> IO (MVar a)
 takeMVar   :: MVar a -> IO a
 putMVar    :: MVar a -> a -> IO ()
 modifyMVar :: (a -> a) -> MVar a -> IO () -- Dangerous
-
-block           :: IO a
-whenBlockedThen :: IO a -> IO a -> IO a
-
-throw :: Exception e => e -> IO a
-catch :: Exception e => IO a -> (e -> IO a) -> IO a
 ```
 
 
-## TVar API
+## Transactional API
 
 ```haskell
 data STM a
-instance Monad STM where ...
+instance Monad STM where …
 
 data TVar a
 newTVar    :: a -> STM (TVar a)
@@ -323,9 +349,6 @@ modifyTVar :: (a -> a) -> TVar a -> STM ()
 
 retry  :: STM a
 orElse :: STM a -> STM a -> STM a
-
-throwSTM :: Exception e => e -> STM a
-catchSTM :: Exception e => STM a -> (e -> STM a) -> STM a
 
 atomically :: STM a -> IO a
 ```
@@ -386,7 +409,7 @@ and verify it in parallel"
 
 
 
-## ... is a one-liner
+## …is a one-liner
 
 ```haskell
 spec :: Eq a => a -> (a -> b) -> a -> b
@@ -438,7 +461,6 @@ spec = specBy (==)
 
 - Exceptions
 - Debugging
-- `async` library
 - FFI integration
 - Distributed processes
 - Data parallel computations
