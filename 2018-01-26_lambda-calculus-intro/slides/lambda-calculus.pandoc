@@ -1,0 +1,388 @@
+---
+title: "Lambda calculus for dummies"
+author: David Luposchainsky
+date: 2018-01-26
+---
+
+
+# Lambdas today
+
+## Everyone has them
+
+```javascript
+// Javascript
+addOne = function(x) { return x + 1; } // Old style
+addOne = x => x + 1;                   // ES6 style
+```
+. . .
+```java
+// Java
+boilerplate addOne = x -> return x + 1;
+```
+. . .
+```c++
+// C++
+auto addOne = [](int x) { return x + 1; }
+```
+. . .
+```haskell
+-- Haskell
+addOne = \x -> x+1
+```
+
+## But why?
+
+- Functions as first class values
+- Long forgotten, then rediscovered
+
+. . .
+```haskell
+map (\x -> x + 1) [1,2,3] -- = [2,3,4]
+```
+. . .
+```javascript
+http.createServer((request, response) => {
+    doStuff(request);
+    response.writeHead(200, {'Content-Type': 'text/plain'});
+    response.end('Hello World\n');
+}).listen(1337, '127.0.0.1');
+```
+
+# Let’s go back a(lmost) a century
+
+## Same thing, different views
+
+Researching foundations of mathematics and computation
+
+- Turing imperative machine emulates mathematician
+- Church mathematical construct emulates mathematics
+
+## Turing machines
+
+- Technical and somewhat complicated
+- Powerful
+- Theoretical use: immeasurably high
+- Practical use: saying wrong or useless things on the internet
+
+## Definition of a Turing machine
+
+A Turing machine is a 7-tuple $M=\langle Q,\Gamma ,b,\Sigma ,\delta ,q_{0},F\rangle$
+
+$Q$
+:  finite set of states
+
+$\Gamma$
+:  finite set of tape symbols
+
+$b\in \Gamma$
+:  blank symbol
+
+$\Sigma \subseteq \Gamma \setminus \{b\}$
+:  set of input symbols
+
+$q_{0}\in Q$
+:  initial state
+
+$F\subseteq Q$
+:  set of final states
+
+$\delta :(Q\setminus F)\times \Gamma \rightarrow Q\times \Gamma \times \{L,R\}$
+:  transition function
+
+
+## Lambda calculus
+
+- Extremely simple
+- Just as powerful
+- Theoretical use: immeasurably high
+- Practical use: incrementing lists of numbers
+
+
+# Lambda calculus
+
+## Definition of Lambda Calculus
+
+Terms
+:  - $x$ $\color{gray}\text{(variable)}$
+   - $(\lambda x. T)$ $\color{gray}\text{(abstraction)}$
+   - $(T_1~ T_2)$ $\color{gray}\text{(application)}$
+
+. . .
+
+Evaluation
+:  - $(\lambda x. T_x) \equiv (\lambda y. T_y)$ $\color{gray}\text{(renaming variables)}$
+   - $(\lambda x. T_x)y \rightsquigarrow T_x[x \rightarrow y]$ $\color{gray}\text{(function application)}$
+   - $(\lambda x. (f~ x)) \equiv f$ ${\color{gray} \text{(}\eta\text{ reduction)}}$
+
+## Example 1
+
+$$ (({\color{blue}\lambda x.~ (\lambda y.~ x)})~ 1)~ 2 $$
+
+. . .
+
+$$ = ((\lambda y. ~ x)[x \rightarrow 1]) ~  2 $$
+
+. . .
+
+$$ = (\lambda y. ~ 1) 2 $$
+
+. . .
+
+$$ = 1[y \rightarrow 2] $$
+
+. . .
+
+$$ = 1 $$
+
+## Example 2
+
+$$ (({\color{blue}\lambda f.~ (\lambda x.~  (f~ x))}) ~ \text{double}) ~ 4 $$
+
+. . .
+
+$$ = ((\lambda x.~  (f~ x))[f \rightarrow \text{double}]) ~ 4 $$
+
+. . .
+
+$$ = (\lambda x.~  (double~ x)) ~ 4 $$
+
+. . .
+
+$$ = (double~ x)[x \rightarrow 4] $$
+
+. . .
+
+$$ = double ~  4 $$
+
+## Too many parentheses!
+
+$$
+\begin{aligned}
+\text{const} &= \lambda x. ~ (\lambda y. ~ x) \\
+             &= \lambda x~ y.~ x
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\text{apply} &= \lambda f. ~ (\lambda x. ~ (f~  x)) \\
+             &= \lambda f~ x.~ f~ x
+\end{aligned}
+$$
+
+$$
+\lambda x.~((f~x)~y)~z = \lambda x.~f~x~y~z
+$$
+
+## Numbers
+
+= repeated function application
+
+- $0 := \lambda f ~ x. ~ x$
+- $1 := \lambda f ~ x. ~ f ~ x$
+- $2 := \lambda f ~ x. ~ f ~ (f ~ x)$
+
+. . .
+
+$$
+\text{succ} := \lambda n. ~(\lambda f~x.~ f ~ (n ~ f ~ x))
+$$
+
+. . .
+
+$$
+\text{add} := \lambda m~n. ~(\lambda f~x.~ m~f~(n~f~x))
+$$
+
+. . .
+
+$$
+\text{mul} := \lambda m~n.~(\lambda f.~m~(n~f))
+$$
+
+## Booleans
+
+= ignore one branch
+
+$$
+\begin{aligned}
+\text{true}  &:= \lambda x~y.~x \\
+\text{false} &:= \lambda x~y.~y
+\end{aligned}
+$$
+
+. . .
+
+$$
+\begin{aligned}
+\text{ifThenElse} :=& \lambda p~t~f . ~{\color{gray}(}p~t{\color{gray})} ~f \\
+                   \equiv& \lambda p~t . ~p~t \\
+                   \equiv& \lambda p . ~p \\
+                   \equiv& \text{id}
+\end{aligned}
+$$
+
+. . .
+
+$$
+\begin{aligned}
+\text{not} &:= \lambda p.~p~\text{false}~\text{true} \\
+\text{and} &:= \lambda p~q.~p~q~\text{false} \\
+\text{or} &:= \lambda p~q.~p~\text{true}~q
+\end{aligned}
+$$
+
+## Pairs/lists
+
+= nil/cons like in Lisp
+
+$$
+\begin{aligned}
+\text{cons}   &:= \lambda x~y~f.~f~x~y \\
+\text{first}  &:= \lambda p.~p~\text{true} \\
+\text{second} &:= \lambda p.~p~\text{false} \\
+\text{nil}    &:= \lambda x.~\text{true} \\
+\text{null}   &:= \lambda p.~p~(\lambda x~y.~\text{false})
+\end{aligned}
+$$
+
+## Recursion
+
+…but how?
+
+. . .
+
+Idea: emulate module system
+
+$$
+\begin{aligned}
+(\lambda {\color{red}helper}. &\langle\text{program}\rangle) \\
+    & ({\color{red}\langle\text{value for helper}\rangle})
+\end{aligned}
+$$
+
+. . .
+
+$$
+\begin{aligned}
+(\lambda add. & ~add~3~4) \\
+              & (\lambda m~n. ~(\lambda f~x.~ m~f~(n~f~x)))
+\end{aligned}
+$$
+
+## Infinite modules, yaay
+
+
+$$
+\begin{aligned}
+(\lambda infiniteLoop. & ~infiniteLoop) \\
+              & (infiniteLoop {\color{red}BZZZT})
+\end{aligned}
+$$
+
+. . .
+
+```
+(\inf. inf)
+    (inf BZZZT)
+```
+
+. . .
+
+```
+(\inf. inf)
+    ((\inf2. inf2)
+        (inf2 BZZZT))
+```
+
+. . .
+
+```
+(\inf. inf)
+    ((\inf2. inf2)
+        ((\inf3. inf3)
+            ((\inf4. inf4)
+                (inf4 BZZZT))))
+```
+
+## Fixed point combinator!
+
+$$
+\begin{aligned}
+\text{Y}~f &= f~(\text{Y}~f) \\
+    &= f~(f~(\text{Y}~f)) \\
+    &= f~(f~(f~(\ldots)))
+\end{aligned}
+$$
+
+. . .
+
+$$
+Y = \lambda f.~ (\lambda x.~ f ~(x~ x)) ~(\lambda x.~ f ~(x~ x))
+$$
+
+
+## Y combinator usage
+
+$$
+\begin{aligned}
+\text{factorialStep} := \lambda rec~n.~\text{ifThenElse}~&(n>0) \\
+                                                                &(n * rec~(n-1)) \\
+                                                                &1
+\end{aligned}
+$$
+
+. . .
+
+$$
+\text{factorial} := \text Y ~\text{factorialStep}
+$$
+
+## Example
+
+$$
+\begin{aligned}
+\text{factorial}~3 &= {\color{gray}(}\text Y ~\text{factorialStep}{\color{gray})} ~ 3 \\
+                   &= \text{factorialStep} ~ (\text{Y}~\text{factorialStep})~3 \\
+                   &= (\lambda rec.~{\color{red}\text{ifThenElse}~(3>0)~(3 * rec~(3-1))~1})~(\text{Y}~\text{factorialStep}) \\
+                   &= (\lambda rec.~(3 * rec~2))~(\text{Y}~\text{factorialStep}) \\
+                   &= 3 * \text{factorial}~2 \\
+                   &= 3 * 2 * 1 * \text{factorial}~0 \\
+                   &= 6 * \text{Y}~\text{factorialStep}~0 \\
+                   &= 6 * (\lambda rec.~{\color{red}\text{ifThenElse}~(0>0)~(0 * rec~(0-1))~1})~(\text{Y}~\text{factorialStep}) \\
+                   &= 6 * (\lambda rec.~1)~(\text{Y}~\text{factorialStep}) \\
+                   &= 6 * 1 \\
+                   &= 6
+\end{aligned}
+$$
+
+## What now?
+
+- Invent Lisp
+- Add types (simply typed LC, Hindley/Milner)
+- CPS transform your whole program to make maintenance a nightmare
+
+
+
+
+## Questions?
+
+```
+fibo :=
+    (\pred true false y 1 2.
+        (\isZero sub.
+            (\leq.
+                y (\rec n. (leq n 2)
+                           n
+                           (add (rec (sub n 1))
+                                (rec (sub n 2)))))
+                (\m n. isZero (sub m n)))
+            (\n. n (\x. false) true)
+            (\m n = n pred m))
+        (\n f x. n (\g h. h (g f)) (\u. x) (\u. u))
+        (\x y. x)
+        (\x y. y)
+        (\f. (\x. f (x x)) (\x. f (x x)))
+        (\f x. f x)
+        (\f x. f (f x))
+```
