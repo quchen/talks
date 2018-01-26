@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+while true; do
+    make && notify-send -u critical "Pandoc done" || notify-send -u critical "CONVERSION FAILURE"
+    echo "ENTER for new conversion"
+    read
+done
