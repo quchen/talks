@@ -236,18 +236,18 @@ print(123)
 . . .
 ```asm
 ; Low level
-load            %eax 1
-load            %ebx 3
+load            %eax 1         ; 1 in register EAX
+load            %ebx 3         ; 3 in register EBX
 loop:
-add             %sp  %sp  1
-load            %sp  %eax
-call print
-less            %tmp %eax %ebx
-add             %eax %eax 1
-if0             %tmp loop
-add             %sp  %sp  1
-load            %sp  123
-call print
+add             %sp  %sp  1    ; Increase stack pointer…
+load            %sp  %eax      ; …to push EAX (= 1) onto stack
+call print                     ; Print top of stack (and popping it)
+less            %tmp %eax %ebx ; Check exit condition
+add             %eax %eax 1    ; Increase loop counter
+if0             %tmp loop      ; Loop if exit condition isn’t met
+add             %sp  %sp  1    ; Increase stack pointer…
+load            %sp  123       ; …to push 123 onto the stack
+call print                     ; Print top of stack (and popping it)
 ```
 
 # Code generation
@@ -263,7 +263,7 @@ Translate to processor opcodes
 0x07 <link: print>
 0x03            0x04 0x01 0x05
 0x02            0x01 0x01 0x01
-0x06            0x04 -0x05
+0x06            0x04 0x05
 0x02            0x02 0x02 0x01
 0x00            0x02 0x7b
 0x07 <link: print>
@@ -276,16 +276,41 @@ Put program alongside its libraries into a single file
 ```asm
 0x0a00            0x0a01 0x0a01
 0x0a00            0x0a05 0x0a03
-0x0a02:
 0x0a02            0x0a02 0x0a02 0x0a01
 0x0a00            0x0a02 0x0a01
 0x0a07 0x03d4
 0x0a03            0x0a04 0x0a01 0x0a05
 0x0a02            0x0a01 0x0a01 0x0a01
-0x0a06            0x0a04 0x0a02
+0x0a06            0x0a04 0x0a05
 0x0a02            0x0a02 0x0a02 0x0a01
 0x0a00            0x0a02 0x0a7b
 0x0a07 0x03d4
+```
+# Linking
+
+Make it wholly unreadable
+
+```asm
+0a00 0a01 0a01 0a00 0a05 0a03 0a02 0a02
+0a02 0a01 0a00 0a02 0a01 0a07 03d4 0a03
+0a04 0a01 0a05 0a02 0a01 0a01 0a01 0a06
+0a04 0a05 0a02 0a02 0a02 0a01 0a00 0a02
+0a7b 0a07 03d4
+```
+
+. . .
+
+```
+...
+00002ea0: c508 4a8b 742b 084a 8974 2808 4983 c508  ..J.t+.J.t(.I...
+00002eb0: 4e8b 442b 084e 8944 2808 4983 c508 4a8b  N.D+.N.D(.I...J.
+00002ec0: 542b 084a 8954 2808 4983 c508 4e8b 4c2b  T+.J.T(.I...N.L+
+00002ed0: 084e 894c 2808 4983 c508 4e8b 542b 084e  .N.L(.I...N.T+.N
+00002ee0: 8954 2808 4983 c508 4d39 dd0f 84ef 0a00  .T(.I...M9......
+00002ef0: 004e 8b64 2b08 4e89 6428 0849 8b7c 1d10  .N.d+.N.d(.I.|..
+00002f00: 4a89 7c28 104d 8b74 1d18 4e89 7428 1849  J.|(.M.t..N.t(.I
+00002f10: 8b4c 1d20 4a89 4c28 2049 8b74 1d28 4a89  .L. J.L( I.t.(J.
+...
 ```
 
 # Linking: add runtime
