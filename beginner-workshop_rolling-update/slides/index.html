@@ -32,8 +32,7 @@
 <!-- Titel-Slide -->
 <section>
     <p>
-        TechDay</br>
-        10th of March 2017
+        MuniHac 2018
     </p>
     <h1>Haskell beginner workshop</h1>
     <p>
@@ -97,9 +96,13 @@ apps, and web services.*
 ### Lazy (evaluation by need)
 
 ```haskell
-foo flag = if flag then "hello world" else show expensive
-  where
-    expensive = sum (take 10e10 primes)
+expensive = sum (take 100000 primes)
+
+foo flag
+  = if flag
+      then "hello world"
+      else show expensive
+
 ```
 
 **Advantage:** unnecessary computations skipped
