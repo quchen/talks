@@ -144,6 +144,25 @@ listOfLiterals = _todo
 
 
 -- #############################################################################
+-- Type classes
+-- #############################################################################
+
+class BoolIsh a where
+    isTrue :: a -> Bool
+
+    isFalse :: a -> Bool
+
+instance BoolIsh Bool where
+    isTrue = _todo
+    isFalse = _todo
+
+instance BoolIsh (Maybe a) where
+    isTrue = _todo
+    isFalse = _todo
+
+
+
+-- #############################################################################
 -- Monoids
 -- #############################################################################
 
