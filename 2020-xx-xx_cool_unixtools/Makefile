@@ -1,0 +1,2 @@
+all :
+	./generate-random-slides

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cd "$(dirname "$(readlink -f "$0")")"
+self=$0
+
+create_pdf() {
+    pandoc \
+        --from=markdown+fenced_code_blocks+fenced_code_attributes+tex_math_dollars \
+        --to beamer \
+        --latex-engine=xelatex \
+        --variable fontsize=9pt \
+        -o slides.pdf
+}
+
+
+pdf_input() {
+    echo "# These slides were generated as dirtily as the tools they talk about."
+    echo '\fontsize{5pt}{3}\selectfont'
+    echo
+    echo '```bash'
+    cat "$self"
+    echo '```'
+
+
+
+find tools -type f | python3 <(cat <<'EOF'
+import sys
+import random
+
+pdf_input_content = []
+for filename in sys.stdin.read().split('\n'):
+    try:
+        with open(filename, 'r') as file:
+            pdf_input_content.append(f'<!-- File: {filename} -->\n\n{file.read()}')
+    except FileNotFoundError:
+        pass
+
+random.shuffle(pdf_input_content)
+print('\n\n\n\n\n'.join(pdf_input_content))
+EOF
+)
+}
+
+echo "Shuffling slides" >&2
+pdf_input | create_pdf
+echo "Done! Have fun" >&2

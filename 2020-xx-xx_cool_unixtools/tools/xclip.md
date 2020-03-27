@@ -1,0 +1,4 @@
+xclip
+=====
+
+terminal clipboard integration
