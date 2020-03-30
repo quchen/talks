@@ -44,5 +44,5 @@ EOF
 }
 
 echo "Shuffling slides" >&2
-pdf_input | create_pdf
+pdf_input | tee 'slides.md' | create_pdf
 echo "Done! Have fun" >&2
