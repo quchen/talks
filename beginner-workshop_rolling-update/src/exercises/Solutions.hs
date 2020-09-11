@@ -10,6 +10,9 @@
 module Solutions where
 
 
+import Prelude hiding (replicate, repeat, cycle, map , curry, uncurry, head2,
+    mconcat', factorial, mergesort, merge, splitIntoHalves, find, zip, zipWith,
+    applyAllTo, runAll, getFileLength, everyOther, splitAtMiddle, guessingGame)
 import Text.Read
 
 -- #############################################################################
@@ -49,17 +52,17 @@ fizzy x
 --
 -- >>> cons2 1 2 [3,4,5]
 -- [1,2,3,4,5]
-cons' x y list = x : y : list
+cons2 x y list = x : y : list
 
 -- replicate 3 'a' == "aaa"
-replicate' 0 _ = []
-replicate' counter x = x : replicate' (counter-1) x
+replicate 0 _ = []
+replicate counter x = x : replicate (counter-1) x
 
 -- repeat x == [x,x,x,x,x,x,x,…]
-repeat' x = x : repeat' x
+repeat x = x : repeat x
 
 -- cycle [a,b,c] == [a,b,c,a,b,c,a,b,c, …]
-cycle' list = list ++ cycle' list
+cycle list = list ++ cycle list
 
 -- Extract `len` elements from a list, starting with the `start`th one.
 --
@@ -83,9 +86,9 @@ slice start len = take len . drop start
 --   - True || False
 projectEuler1 = sum (filter(\x -> mod x 3 == 0 || mod x 5 == 0) [1..999])
 
-map' :: (a -> b) -> [a] -> [b]
-map' _ [] = []
-map' f (x:xs) = f x : map' f xs
+map :: (a -> b) -> [a] -> [b]
+map _ [] = []
+map f (x:xs) = f x : map f xs
 
 
 
@@ -113,18 +116,18 @@ sumOfEvenSquares = (sum . map(\x -> x^2) . filter even) [1..99]
 
 -- Convert a function taking a tuple to a function taking two arguments.
 --
--- >>> curry' fst 1 2
+-- >>> curry fst 1 2
 -- 1
-curry' :: ((a, b) -> c) -> a -> b -> c
-curry' f p1 p2 = f (p1, p2)
+curry :: ((a, b) -> c) -> a -> b -> c
+curry f p1 p2 = f (p1, p2)
 
 -- Inverse of curry: convert a function taking multiple arguments to one taking
 -- a tuple.
 --
--- >>> uncurry' (*) (3,4)
+-- >>> uncurry (*) (3,4)
 -- 12
-uncurry' :: (a -> b -> c) -> (a, b) -> c
-uncurry' f (x, y) = f x y
+uncurry :: (a -> b -> c) -> (a, b) -> c
+uncurry f (x, y) = f x y
 
 -- Get the second element of a list, if there is one.
 --
@@ -213,16 +216,16 @@ mergesort xs
 
 
 -- Get the first element matching the predicate
-find' :: (a -> Bool) -> [a] -> Maybe a
-find' predicate (y:ys) = if predicate y then Just y else find' predicate ys
-find' predicate [] = Nothing
+find :: (a -> Bool) -> [a] -> Maybe a
+find predicate (y:ys) = if predicate y then Just y else find predicate ys
+find predicate [] = Nothing
 
 
 -- Pair entries up, stop when one list is empty
--- e.g. zip' [1..] "abc" ==> [(1,'a'), (2,'b'), (3,'c')]
-zip' :: [a] -> [b] -> [(a,b)]
-zip' (x:xs) (y:ys) = (x, y):(zip' xs ys)
-zip' _ _ = []
+-- e.g. zip [1..] "abc" ==> [(1,'a'), (2,'b'), (3,'c')]
+zip :: [a] -> [b] -> [(a,b)]
+zip (x:xs) (y:ys) = (x, y):(zip xs ys)
+zip _ _ = []
 
 -- combine list elements using a function
 --
@@ -230,10 +233,10 @@ zip' _ _ = []
 -- [11,22,33]
 --
 -- NB: zip = zipWith (,)
---     zipWith' f = map f . zip
-zipWith' :: (a -> b -> c) -> [a] -> [b] -> [c]
-zipWith' f (x:xs) (y:ys) = [(f x y)] ++ zipWith f xs ys
-zipWith' _ _ _ = []
+--     zipWith f = map f . zip
+zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith f (x:xs) (y:ys) = [(f x y)] ++ zipWith f xs ys
+zipWith _ _ _ = []
 
 
 -- Apply each function to the value
@@ -257,7 +260,7 @@ applyAllTo = _todo
 -- world
 runAll :: [IO a] -> IO ()
 runAll [] = return ()
-runAll (x:xs) = do 
+runAll (x:xs) = do
   _ <- x
   runAll xs
 
@@ -289,7 +292,7 @@ everyOther _ = []
 -- Easy using `length`, tricky so it works even on infinite lists.
 splitAtMiddle :: [a] -> ([a], [a])
 splitAtMiddle xs = helper xs (everyOther xs)
-  where 
+  where
     helper (x:xs) (y:ys) = let (a, b) = helper xs ys
       in (x:a, b)
     helper xs [] = ([], xs)
@@ -316,7 +319,7 @@ guessingGame number = do
         Nothing -> do
           putStr "Please enter a number"
           guessingGame number
-        Just guessInt -> 
+        Just guessInt ->
           case compare number guessInt of
             LT -> do
               putStrLn "You guess is too high"
@@ -325,4 +328,3 @@ guessingGame number = do
               putStrLn "Your guess is too low"
               guessingGame number
             EQ -> putStrLn "You cheated!"
-
