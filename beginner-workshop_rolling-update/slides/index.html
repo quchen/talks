@@ -491,7 +491,7 @@ data OptionalInteger
 
 data ListOfChar
     = Nil
-    | Cons Char (List Char)
+    | Cons Char ListOfChar
 ```
     </script></section>
 
@@ -644,9 +644,9 @@ show :: Show a => a -> String
 data YesNo = Yes | No
 
 instance Eq YesNo where
-    Yes = Yes = True
-    No  = No  = True
-    _   = _   = False
+    Yes == Yes = True
+    No  == No  = True
+    _   == _   = False
 
 instance Show YesNo where
     show Yes = "Yes"
@@ -668,12 +668,12 @@ data YesNo = Yes | No
 data List a = Nil | Cons a (List a)
 
 instance Eq a => Eq (List a) where
-    []     == []      = True
-    (x:xs) == (y:ys)  = x == y && xs == ys
-    _xs    == _ys     = False
+    Nil       == Nil        = True
+    Cons x xs == Cons y ys  = x == y && xs == ys
+    _xs       == _ys        = False
 ```
 
-(This is what `deriving (Eq) would have given us as well.)
+(This is what `deriving (Eq)` would have given us as well.)
     </script></section>
 
     <section data-markdown><script type="text/template">
