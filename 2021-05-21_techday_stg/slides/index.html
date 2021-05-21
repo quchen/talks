@@ -1,0 +1,396 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Functional and low-level: a tour through the STG</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/solarized.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+
+
+
+
+
+<!-- Titel-Slide -->
+<section>
+    <section>
+        <h1>Functional and low-level</h1>
+        <p>
+            <a href="mailto:david.luposchainsky@tngtech.com">David Luposchainsky</a><br/>
+            <a href="https://github.com/quchen/">quchen</a> /ˈkuːχn̩/<br/>
+        </p>
+    </section>
+
+    <section>
+        Slides available online:<br/>
+        <a href="https://github.com/quchen/talks">https://github.com/<strong>quchen</strong>/<strong>talks</strong></a>
+    </section>
+</section>
+
+
+<section>
+    <section>
+        <h2>What happens?</h2>
+        <pre><code class="haskell" data-trim>
+main = print (x+y)
+x = 1
+y = 2
+a + b = … -- built-in
+        </code></pre>
+        <pre><code class="css" data-trim>
+λ. ghc example.hs
+[1 of 1] Compiling Main   ( example.hs, example.o )
+Linking example ...
+        </code></pre>
+    </section>
+
+    <section data-markdown>
+        <script type="text/template">
+            ## The GHC compilation pipeline
+
+            ```
+╭────────╮    ╭─────────╮    ╭──────╮    ╭─────╮    ╭───────╮
+│ Source │ -> │ Haskell │ -> │ Core │ -> │ STG │ -> │ Metal │
+╰────────╯    ╰─────────╯    ╰──────╯    ╰─────╯    ╰───────╯
+            ```
+        </script>
+    </section>
+
+
+    <section>
+        <pre><code class="haskell" data-trim>
+main = print (x+y)
+x = 1
+y = 2
+a + b = … -- built-in
+        </code></pre>
+
+        … translates to …
+
+        <pre><code class="haskell" data-trim>
+main = \ => add x y
+
+x = \ -> Int# 1#
+y = \ -> Int# 2#
+
+add = \x y -> case x of
+    Int# x' -> case y of
+        Int# y' -> case +# x' y' of
+            v -> Int# v
+        </code></pre>
+    </section>
+
+
+    <section>
+        <h3>Haskell</h3>
+        <pre><code class="haskell" data-trim>
+repeat x = let xs = x : xs
+           in xs
+        </code></pre>
+
+        <h3>STG</h3>
+
+        <pre><code class="haskell" data-trim>
+repeat = \x ->
+    letrec xs = \(x xs) -> Cons x xs
+    in xs
+        </code></pre>
+    </section>
+
+
+    <section>
+        <h3>Haskell</h3>
+        <pre><code class="haskell" data-trim>
+map _ [] = []
+map f (x:xs) = f x : map f xs
+        </code></pre>
+
+        <h3>STG</h3>
+
+        <pre><code class="haskell" data-trim>
+map = \f list -> case list of
+    Nil       -> Nil
+    Cons x xs -> let fx  = \(f x)  => f x
+                     fxs = \(f xs) => map f xs
+                 in Cons fx fxs
+        </code></pre>
+    </section>
+
+
+    <section>
+        <h3>Haskell</h3>
+        <pre style="overflow: hidden;"><code class="haskell" data-trim>
+sort [] = []
+sort (pivot:xs) =
+    let (lesser, greater) = partition (&lt;= pivot) xs
+    in sort lesser ++ [pivot] ++ sort greater
+        </code></pre>
+
+        <h3>STG</h3>
+
+        <pre><code class="haskell" data-trim>
+sort = \xs -> case xs of
+    Nil -> Nil
+    Cons pivot xs' ->
+        let leqPivot = \(pivot) y -> leq_Int y pivot
+        in case partition leqPivot xs' of
+            Pair leqPivotXs gtPivotXs ->
+                letrec
+                    leqPivotSorted = \(leqPivotXs) => sort leqPivotXs
+                    gtPivotSorted = \(gtPivotXs) => sort gtPivotXs
+                    fromPivotOn = \(pivot gtPivotSorted) -> Cons pivot gtPivotSorted
+                in concat2 leqPivotSorted fromPivotOn
+
+partition = \p xs -> case xs of
+    Nil -> Pair nil nil
+    Cons y ys -> case partition p ys of
+        Pair yes no -> case p y of
+            True  -> let yes' = \(y yes) -> Cons y yes
+                     in Pair yes' no
+            False -> let no' = \(y no) -> Cons y no
+                     in Pair yes no'
+
+concat2 = \xs ys -> case xs of
+    Nil -> ys
+    Cons x xs' ->
+        let rest = \(xs' ys) => concat2 xs' ys
+        in Cons x rest
+        </code></pre>
+    </section>
+</section>
+
+
+
+<section>
+    <section>
+        <h2>STG language</h2>
+
+        <table style="width: 66%">
+            <tr>
+                <th>Application</th>
+                <td>
+                    <pre><code class="haskell" data-trim>map f xs</code></pre>
+                </td>
+            </tr>
+            <tr>
+                <th>Evaluation,<br/>branching</th>
+                <td>
+                    <pre><code class="haskell" data-trim>
+case f x of
+    Just y  -> …
+    Nothing -> …
+                    </code></pre>
+                </td>
+            </tr>
+            <tr>
+                <th>Definition</th>
+                <td>
+                    <pre><code class="haskell" data-trim>
+let x = …
+in f x
+                    </code></pre>
+                </td>
+            </tr>
+            <tr>
+                <th>Lambda</th>
+                <td>
+                    <pre><code class="haskell" data-trim>\(f) x -> f x</code></pre>
+                </td>
+            </tr>
+            <tr>
+                <th>Primop</th>
+                <td><pre><code class="haskell" data-trim>+# 1# 2#</code></pre></td>
+            </tr>
+        </table>
+    </section>
+
+    <section data-markdown>
+        <script type="text/template">
+            ## Not STG language
+
+            - Types
+                - Class
+                - Instance
+                - Deriving
+            - Syntax
+                - Nested patterns
+                - Guards
+                - Where
+                - if-then-else
+                - List comprehensions
+        </script>
+    </section>
+</section>
+
+
+
+<section>
+    <section>
+        <h1>Live demo</h1>
+    </section>
+
+    <section data-markdown>
+        <script type="text/template">
+            ### Haskell
+            ```haskell
+            main = False `implies` True
+
+            implies p q = not p || q
+            ```
+
+            ### STG
+            ```haskell
+            main = \ =>
+                let notP = \ -> not p
+                in or2 notP q
+            not = \x -> case x of
+                True -> False
+                False -> True
+            or2 = \x y -> case x of
+                True -> True
+                False -> y
+            p = \ -> True
+            q = \ -> False
+
+            ```
+        </script>
+    </section>
+
+    <section data-markdown>
+        <script type="text/template">
+            ```haskell
+              foldr (+) 0 [1,2,3]
+
+            = 1 + foldr (+) 0 [2,3]
+
+            = 1 + (2 + foldr (+) 0 [3])
+
+            = 1 + (2 + (3 + foldr (+) 0 []))
+
+            = 1 + (2 + (3 + 0))
+            ```
+        </script>
+    </section>
+
+    <section data-markdown>
+        <script type="text/template">
+            ```haskell
+              foldl (+) 0 [1,2,3]
+
+            = foldl (+) (0 + 1) [2,3]
+
+            = foldl (+) ((0 + 1) + 2) [3]
+
+            = foldl (+) (((0 + 1) + 2) + 3) []
+
+            = ((0 + 1) + 2) + 3
+            ```
+        </script>
+    </section>
+
+    <section data-markdown>
+        <script type="text/template">
+            ```haskell
+              foldl' (+) 0 [1,2,3]
+
+            = foldl' (+) 1 [2,3]
+
+            = foldl' (+) 3 [3]
+
+            = foldl' (+) 6 []
+
+            = 6
+            ```
+        </script>
+    </section>
+</section>
+
+
+<section>
+    <!--
+    <section data-markdown>
+        <script type="text/template">
+        ## Help!
+
+        If you know about
+
+        - IO
+        - Optimizations
+
+        come talk to me :-)
+        </script>
+    </section>
+    -->
+
+
+
+
+    <section data-markdown>
+        <script type="text/template">
+            # No further slides apply
+
+            Try it! <a href="http://hackage.haskell.org/package/stgi">hackage://<strong>stgi</strong></a></br>
+            Contribute! <a href="https://github.com/quchen/stgi/">github://quchen/<strong>stgi</strong>/</a>
+        </script>
+    </section>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // More info https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                history: true,
+
+                transition: 'slide',
+                transitionSpeed: 'fast',
+                controls: false,
+                progress: false,
+
+                // More info https://github.com/hakimel/reveal.js#dependencies
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ]
+            });
+        </script>
+    </body>
+</html>
