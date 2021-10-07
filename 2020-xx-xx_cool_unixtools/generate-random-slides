@@ -9,7 +9,7 @@ create_pdf() {
     pandoc \
         --from=markdown+fenced_code_blocks+fenced_code_attributes+tex_math_dollars \
         --to beamer \
-        --latex-engine=xelatex \
+        --pdf-engine=xelatex \
         --variable fontsize=9pt \
         -o slides.pdf
 }
