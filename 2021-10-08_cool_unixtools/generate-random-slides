@@ -17,7 +17,7 @@ create_pdf() {
 
 pdf_input() {
     echo "# These slides were generated as dirtily as the tools they talk about."
-    echo '\fontsize{5pt}{3}\selectfont'
+    echo '\fontsize{4pt}{3}\selectfont'
     echo
     echo '```bash'
     cat "$self"
