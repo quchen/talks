@@ -29,15 +29,25 @@ find tools -type f | python3 <(cat <<'EOF'
 import sys
 import random
 
-pdf_input_content = []
+essentials = []
+nice_to_have = []
 for filename in sys.stdin.read().split('\n'):
     try:
         with open(filename, 'r') as file:
-            pdf_input_content.append(f'<!-- File: {filename} -->\n\n{file.read()}')
+            if "essential" in filename:
+                essentials.append((filename, file.read()))
+            else:
+                nice_to_have.append((filename, file.read()))
     except FileNotFoundError:
         pass
 
-random.shuffle(pdf_input_content)
+pdf_input_content = []
+for (filename, contents) in essentials:
+    pdf_input_content.append(f'<!-- File: {filename} -->\n\n{contents}')
+random.shuffle(nice_to_have)
+for (filename, contents) in nice_to_have:
+    pdf_input_content.append(f'<!-- File: {filename} -->\n\n{contents}')
+
 print('\n\n\n\n\n'.join(pdf_input_content))
 EOF
 )
