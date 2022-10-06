@@ -1,0 +1,88 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: e8bdabc2c194d55f8cd96ed6edfd98952345ad314837372c53e6886a0bfaea22
+
+name:           live
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/live#readme>
+homepage:       https://github.com/githubuser/live#readme
+bug-reports:    https://github.com/githubuser/live/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2021 Author name here
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/live
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_live
+  hs-source-dirs:
+      src
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , text
+  default-language: Haskell2010
+
+executable client
+  main-is: Main.hs
+  other-modules:
+      Paths_live
+  hs-source-dirs:
+      app/Client
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , live
+    , network-simple
+    , text
+  default-language: Haskell2010
+
+executable server
+  main-is: Main.hs
+  other-modules:
+      Paths_live
+  hs-source-dirs:
+      app/Server
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , live
+    , network-simple
+    , text
+  default-language: Haskell2010
+
+test-suite live-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_live
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , bytestring
+    , live
+    , text
+  default-language: Haskell2010

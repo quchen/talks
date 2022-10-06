@@ -1,0 +1,71 @@
+name:                workshop-test
+version:             0.1.0.0
+github:              "githubuser/workshop-test"
+license:             BSD3
+author:              "Author name here"
+maintainer:          "example@example.com"
+copyright:           "2021 Author name here"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/workshop-test#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- text
+- aeson
+- bytestring
+
+library:
+  source-dirs: src
+
+executables:
+  client:
+    main:                Main.hs
+    source-dirs:         app/Client
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -Wall
+    dependencies:
+      - workshop-test
+      - network-simple
+      - text
+      - bytestring
+  server:
+    main:                Main.hs
+    source-dirs:         app/Server
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -Wall
+    dependencies:
+      - workshop-test
+      - network-simple
+      - text
+      - bytestring
+
+tests:
+  workshop-test-test:
+    main:                Main.hs
+    source-dirs:         test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -Wall
+    dependencies:
+      - workshop-test
+      - QuickCheck
+      - text

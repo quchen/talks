@@ -1,0 +1,10 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "workshop-test:lib"
+    - path: "./app/Client/"
+      component: "workshop-test:exe:client"
+    - path: "./app/Server/"
+      component: "workshop-test:exe:server"
+    - path: "./test"
+      component: "workshop-test:test:workshop-test-test"

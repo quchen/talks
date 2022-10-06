@@ -1,0 +1,5 @@
+- aeson
+- bytestring
+- network-simple
+- QuickCheck
+- text

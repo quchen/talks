@@ -1,8 +1,0 @@
-cradle:
-  multi:
-    - path: "./"
-      config:
-        cradle:
-          stack:
-            - path: "./app/Client/Main.hs"
-            - path: "./app/Server/Main.hs"
