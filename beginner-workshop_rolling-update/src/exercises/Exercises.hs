@@ -31,7 +31,8 @@ import Text.Read
 --
 --   - if … then … else
 --   - mod 10 4  -->  2
---   - [1..5]  -->  [1,2,3,4,5]
+--   - And: a && b
+--   - show :: a --> String
 fizzy :: Int -> String
 fizzy = _implement_me
 
@@ -150,17 +151,16 @@ listOfLiterals = _todo
 -- #############################################################################
 
 class BoolIsh a where
-    isTrue :: a -> Bool
-
-    isFalse :: a -> Bool
+    truthy :: a -> Bool
+    falsy :: a -> Bool
 
 instance BoolIsh Bool where
-    isTrue = _todo
-    isFalse = _todo
+    truthy = _todo
+    falsy = _todo
 
 instance BoolIsh (Maybe a) where
-    isTrue = _todo
-    isFalse = _todo
+    truthy = _todo
+    falsy = _todo
 
 
 
@@ -253,8 +253,9 @@ runAll = _todo
 
 
 
--- Given
--- Use `fmap` for IO to implement this function!
+-- Use do-notation to implement this funcion. Or, if you’re feeling fancy, try
+-- doing it using `fmap`!
+--
 -- Useful helpers:
 --   - readFile :: String -> IO String
 --   - length :: String -> Int
