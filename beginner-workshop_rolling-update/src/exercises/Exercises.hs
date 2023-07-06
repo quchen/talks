@@ -9,10 +9,12 @@
 
 module Exercises where
 
-import Prelude hiding (replicate, repeat, cycle, map , curry, uncurry, head2,
-    mconcat', factorial, mergesort, merge, splitIntoHalves, find, zip, zipWith,
-    applyAllTo, runAll, getFileLength, everyOther, splitAtMiddle, guessingGame)
-import Text.Read
+import           Prelude   hiding (applyAllTo, curry, cycle, everyOther,
+                            factorial, find, getFileLength, guessingGame, head2,
+                            map, mconcat, mconcat', merge, mergesort, repeat,
+                            replicate, runAll, splitAtMiddle, splitIntoHalves,
+                            uncurry, zip, zipWith)
+import           Text.Read
 
 -- #############################################################################
 -- If
