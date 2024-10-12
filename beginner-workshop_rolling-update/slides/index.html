@@ -688,9 +688,9 @@ instance Eq a => Eq (List a) where
 sort [] = []
 sort (x:xs) = sort smaller ++ middle ++ sort greater
   where
-    smaller = [y | y <- xs, y < x]
+    smaller = filter (< x) xs
     middle  = [x]
-    greater = [y | y <- xs, y >= x]
+    greater = filter (>= x) xs
 ```
 
 ```bash

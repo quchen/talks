@@ -79,8 +79,6 @@ slice start len xs = _implement_me
 --   - True || False
 projectEuler1 = _implement_me
 
-map = _fill_the_gaps "map f list = [ ??? | ??? <- xs ]"
-
 
 
 -- #############################################################################
